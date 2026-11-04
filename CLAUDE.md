@@ -17,7 +17,7 @@ Confirm the username with the attendee in one short sentence before continuing.
 - Check whether a folder with that exact username (lowercase, as GitHub returns it) exists at the repository root.
 - If it does not, create it along with a short `README.md` inside it containing the attendee's username and a one-line placeholder for the project description.
 - Treat that folder as the root of all work for the rest of the session:
-  - Create, edit, move, and delete files **only** inside it..
+  - Create, edit, move, and delete files **only** inside it.
 
 ## 3. How to work
 
