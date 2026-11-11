@@ -1,0 +1,1034 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ascent</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #05060d;
+    color: #8892b0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+  }
+  canvas {
+    height: min(720px, 86vh);
+    aspect-ratio: 2 / 3;
+    border: 1px solid #1c2338;
+    border-radius: 6px;
+    box-shadow: 0 0 60px rgba(60, 120, 255, 0.08);
+    touch-action: none;
+  }
+  /* Expanded mode: the canvas leaves the page flow and fills the window.
+     Its aspect ratio is whatever the window's is. */
+  canvas.expanded {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    aspect-ratio: auto;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .hint {
+    margin: 0;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  body.expanded .hint { display: none; }
+  /* Bottom right, so it stays clear of the altitude and best-score
+     readouts along the top edge in expanded mode. */
+  #expand {
+    position: fixed;
+    bottom: 14px;
+    right: 14px;
+    z-index: 10;
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8892b0;
+    background: rgba(12, 16, 32, 0.7);
+    border: 1px solid #27304a;
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0.55;
+    transition: opacity 0.15s;
+  }
+  #expand:hover { opacity: 1; color: #d6ddf0; }
+</style>
+</head>
+<body>
+
+<button id="expand" type="button">Expand</button>
+<canvas id="game"></canvas>
+<p class="hint">Up / Down: thrust &nbsp;&middot;&nbsp; Left / Right: steer &nbsp;&middot;&nbsp; Space: start and fire &nbsp;&middot;&nbsp; F: expand</p>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------
+   CONFIG
+   Every number worth fiddling with lives here. Change one, reload the
+   page, see what it does. Nothing below this block needs editing to
+   retune the game.
+------------------------------------------------------------------ */
+const CONFIG = {
+  // Physics. Units are pixels per frame, at a fixed 60 frames per second.
+  gravity:            0.068,  // constant downward pull
+  thrust:             0.175,  // upward push at full main engine power
+  reverseThrust:      0.115,  // downward push from the retro thrusters.
+                              // Weaker on purpose: gravity already helps.
+  thrustSpoolUp:      0.065,  // how fast the engine spins up. 1 = instant,
+  thrustSpoolDown:    0.105,  // lower = clunkier. This is the clunk dial.
+  maxFallSpeed:       3.6,    // terminal velocity going down
+  maxRiseSpeed:       3.4,    // speed cap going up
+  sideAccel:          0.32,   // left/right acceleration
+  sideMaxSpeed:       4.6,
+  sideFriction:       0.962,  // 1.0 = frictionless ice, 0.8 = sticky.
+                              // High values mean you drift and overshoot.
+
+  // The world scrolls down past you. Faster scroll = harder.
+  scrollStart:        2.0,
+  scrollMax:          6.2,
+  scrollRampPerSec:   0.045,  // how fast difficulty climbs
+
+  // Asteroid spawning, measured in frames between spawns.
+  spawnEveryStart:    70,
+  spawnEveryMin:      24,
+  spawnRampPerSec:    0.50,
+  asteroidMinRadius:  14,
+  asteroidMaxRadius:  38,
+
+  // Ship
+  shipRadius:         11,     // collision circle, not the drawn size
+  ceiling:            56,     // ship cannot climb above this y
+
+  // Power-ups and the lasers they grant.
+  powerupEveryMin:    540,    // frames between spawns, picked at random
+  powerupEveryMax:    900,    // between these two. ~9 to 15 seconds.
+  powerupRadius:      13,
+  weaponDuration:     360,    // 6 seconds of lasers per pickup
+  shotsPerBurst:      3,      // one trigger pull = three bolts in a row
+  shotGap:            5,      // frames between bolts inside a burst
+  fireEvery:          22,     // frames before another burst can start
+  bulletSpeed:        10.5,
+
+  // Booster pods: a second rocket lights, you go fast, rocks bounce off.
+  laserPodChance:     0.55,   // the rest of the pods are boosters
+  boostDuration:      200,    // ~3.3 seconds of burn per pod
+  boostScrollMult:    2.2,    // how much faster the world rushes past
+  boostThrustMult:    1.9,    // the extra rocket's share of the push
+  boostSpool:         0.075,  // how fast it lights and how slowly it dies
+};
+
+// W and H are the playfield size in game units. In boxed mode they stay
+// at 480x720 and CSS scales the whole thing. In expanded mode they become
+// the window's own pixel size, so the playfield really is bigger rather
+// than just drawn larger. Everything downstream reads them live.
+let W = 480;
+let H = 720;
+let expanded = true;        // the game fills the window by default
+let worldReady = false;     // true once the ship and stars actually exist
+
+const BOX_W = 480;          // the boxed playfield, also the difficulty baseline
+const BOX_H = 720;
+const STEP = 1000 / 60;     // fixed physics step, in milliseconds
+
+/* ------------------------------------------------------------------
+   CANVAS SETUP
+   The canvas is always 480x720 in game coordinates. The backing store
+   is scaled by devicePixelRatio so it stays sharp on retina screens,
+   and CSS scales the whole thing to fit the window.
+------------------------------------------------------------------ */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+function setupCanvas() {
+  const dpr = window.devicePixelRatio || 1;
+  const oldW = W;
+  const oldH = H;
+
+  if (expanded) {
+    W = Math.max(320, Math.round(window.innerWidth));
+    H = Math.max(400, Math.round(window.innerHeight));
+  } else {
+    W = BOX_W;
+    H = BOX_H;
+  }
+
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.textBaseline = "top";
+
+  if (W !== oldW || H !== oldH) rescaleWorld(oldW, oldH);
+}
+
+// When the playfield changes size mid-run, everything already in flight
+// has to move with it. Without this the ship can end up outside the new
+// bounds, or every asteroid snaps into the left edge.
+function rescaleWorld(oldW, oldH) {
+  // setupCanvas() runs once at load, before the ship and stars are
+  // created. Checking a plain flag avoids touching variables that do
+  // not exist yet, which would throw.
+  if (!worldReady || !oldW || !oldH) return;
+  const fx = W / oldW;
+  const fy = H / oldH;
+
+  ship.x *= fx;
+  ship.y *= fy;
+  for (const list of [asteroids, powerups, bullets]) {
+    for (const item of list) { item.x *= fx; item.y *= fy; }
+  }
+  for (const p of particles) { p.x *= fx; p.y *= fy; }
+  for (const s of stars) { s.x *= fx; s.y *= fy; }
+
+  ship.x = Math.max(CONFIG.shipRadius, Math.min(W - CONFIG.shipRadius, ship.x));
+  ship.y = Math.max(CONFIG.ceiling, Math.min(H - 30, ship.y));
+  pickIdleTarget();
+}
+
+function toggleExpand() {
+  expanded = !expanded;
+  canvas.classList.toggle("expanded", expanded);
+  document.body.classList.toggle("expanded", expanded);
+  expandButton.textContent = expanded ? "Shrink" : "Expand";
+  setupCanvas();
+}
+
+const expandButton = document.getElementById("expand");
+expandButton.addEventListener("click", () => {
+  toggleExpand();
+  expandButton.blur();   // otherwise the button keeps keyboard focus and
+                         // eats the spacebar on the next press
+});
+
+canvas.classList.toggle("expanded", expanded);
+document.body.classList.toggle("expanded", expanded);
+expandButton.textContent = expanded ? "Shrink" : "Expand";
+
+setupCanvas();
+window.addEventListener("resize", setupCanvas);
+
+/* ------------------------------------------------------------------
+   INPUT
+   One object holding which keys are down right now. The game loop
+   reads it; the event handlers only write to it.
+------------------------------------------------------------------ */
+const keys = { up: false, down: false, left: false, right: false, fire: false };
+
+window.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowUp")    { keys.up = true;    e.preventDefault(); }
+  if (e.key === "ArrowDown")  { keys.down = true;  e.preventDefault(); }
+  if (e.key === "ArrowLeft")  { keys.left = true;  e.preventDefault(); }
+  if (e.key === "ArrowRight") { keys.right = true; e.preventDefault(); }
+  if (e.key === "f" || e.key === "F") toggleExpand();
+  if (e.key === "Escape" && expanded) toggleExpand();
+  if (e.key === " " || e.key === "Enter") {
+    e.preventDefault();
+    if (state === "playing") keys.fire = true;
+    else if (state === "ready") startRun();
+    else if (state === "dead" && deadFrames > 40) startRun();
+  }
+});
+
+window.addEventListener("keyup", (e) => {
+  if (e.key === "ArrowUp")    keys.up = false;
+  if (e.key === "ArrowDown")  keys.down = false;
+  if (e.key === "ArrowLeft")  keys.left = false;
+  if (e.key === "ArrowRight") keys.right = false;
+  if (e.key === " " || e.key === "Enter") keys.fire = false;
+});
+
+/* ------------------------------------------------------------------
+   GAME STATE
+------------------------------------------------------------------ */
+let state = "ready";        // "ready" | "playing" | "dead"
+let frame = 0;              // ticks forever, used for idle animation
+let ship, asteroids, particles, stars, powerups, bullets;
+let scroll, spawnTimer, spawnEvery, altitude, elapsed, deadFrames, shake;
+let powerupTimer, weaponTimer, fireCooldown, burstRemaining, burstTimer;
+let boostTimer, boostLevel;
+let idleTarget = { x: W / 2, y: 170 };
+let best = loadBest();
+
+function loadBest() {
+  // localStorage can throw in private windows or with site data blocked,
+  // so every read and write is wrapped.
+  try { return Number(localStorage.getItem("ascent-best")) || 0; }
+  catch (err) { return 0; }
+}
+
+function saveBest(value) {
+  try { localStorage.setItem("ascent-best", String(value)); }
+  catch (err) { /* nothing to do; the score just will not persist */ }
+}
+
+function makeStars() {
+  // Three parallax layers. Distant stars are dimmer and move slower,
+  // which is what sells the sense of climbing.
+  const layers = [
+    { count: 70, speed: 0.25, size: 1.0, alpha: 0.35 },
+    { count: 40, speed: 0.55, size: 1.4, alpha: 0.55 },
+    { count: 20, speed: 1.00, size: 2.0, alpha: 0.85 },
+  ];
+  const out = [];
+  for (const layer of layers) {
+    for (let i = 0; i < layer.count; i++) {
+      out.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        speed: layer.speed,
+        size: layer.size,
+        alpha: layer.alpha,
+      });
+    }
+  }
+  return out;
+}
+
+function resetWorld() {
+  // thrustLevel is how spun-up the engine currently is, 0 to 1. It chases
+  // the key state instead of matching it, which is where the clunk lives.
+  ship = { x: W / 2, y: H * 0.45, vx: 0, vy: 0, thrustLevel: 0, reverseLevel: 0 };
+  asteroids = [];
+  particles = [];
+  powerups = [];
+  bullets = [];
+  powerupTimer = 260;        // first one arrives early, to teach the mechanic
+  weaponTimer = 0;           // frames of laser time remaining
+  fireCooldown = 0;
+  burstRemaining = 0;
+  burstTimer = 0;
+  boostTimer = 0;            // frames of boost remaining
+  boostLevel = 0;            // how lit the second rocket is, 0 to 1
+  scroll = CONFIG.scrollStart;
+  spawnEvery = CONFIG.spawnEveryStart;
+  spawnTimer = CONFIG.spawnEveryStart;
+  altitude = 0;
+  elapsed = 0;
+  deadFrames = 0;
+  shake = 0;
+}
+
+function startRun() {
+  resetWorld();
+  state = "playing";
+}
+
+stars = makeStars();
+resetWorld();
+worldReady = true;
+
+/* ------------------------------------------------------------------
+   ASTEROIDS
+   Each one is a jagged polygon generated once at spawn, then just
+   translated and rotated. Collision uses a plain circle, which is
+   slightly forgiving and feels better than exact polygon hits.
+------------------------------------------------------------------ */
+function spawnAsteroid() {
+  const r = CONFIG.asteroidMinRadius +
+            Math.random() * (CONFIG.asteroidMaxRadius - CONFIG.asteroidMinRadius);
+
+  const points = 7 + Math.floor(Math.random() * 4);
+  const verts = [];
+  for (let i = 0; i < points; i++) {
+    const angle = (i / points) * Math.PI * 2;
+    const wobble = 0.65 + Math.random() * 0.5;   // how lumpy the rock is
+    verts.push({ x: Math.cos(angle) * r * wobble, y: Math.sin(angle) * r * wobble });
+  }
+
+  asteroids.push({
+    x: r + Math.random() * (W - r * 2),
+    y: -r - 10,
+    r: r,
+    verts: verts,
+    rot: Math.random() * Math.PI * 2,
+    spin: (Math.random() - 0.5) * 0.03,
+    drift: (Math.random() - 0.5) * 1.2,        // slight sideways motion
+  });
+}
+
+function spawnPowerup() {
+  const pad = CONFIG.powerupRadius + 24;
+  powerups.push({
+    x: pad + Math.random() * (W - pad * 2),
+    y: -CONFIG.powerupRadius - 10,
+    kind: Math.random() < CONFIG.laserPodChance ? "laser" : "boost",
+    phase: Math.random() * Math.PI * 2,   // offsets the bob so they differ
+    drift: (Math.random() - 0.5) * 0.9,
+  });
+}
+
+function fireBolt() {
+  // One bolt, straight up. A trigger pull sends three of these in
+  // quick succession; the burst logic lives in update().
+  bullets.push({
+    x: ship.x,
+    y: ship.y - 14,
+    vx: 0,
+    vy: -CONFIG.bulletSpeed,
+  });
+  burst(ship.x, ship.y - 14, 3, "140, 255, 210");
+}
+
+function burst(x, y, count, color) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 5;
+    particles.push({
+      x: x, y: y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 1,
+      decay: 0.012 + Math.random() * 0.02,
+      color: color,
+    });
+  }
+}
+
+/* ------------------------------------------------------------------
+   TITLE SCREEN AUTOPILOT
+   The ship wanders on its own before a run starts. Targets are drawn
+   from two bands, above and below the title text, so it never flies
+   through the words.
+------------------------------------------------------------------ */
+function pickIdleTarget() {
+  const useTopBand = Math.random() < 0.5;
+  idleTarget = {
+    x: 60 + Math.random() * (W - 120),
+    y: useTopBand
+      ? 100 + Math.random() * (H / 2 - 230)
+      : H / 2 + 130 + Math.random() * (H / 2 - 230),
+  };
+}
+
+function idleFly() {
+  const dx = idleTarget.x - ship.x;
+  const dy = idleTarget.y - ship.y;
+
+  // Retarget on arrival, plus a small random chance each frame so it
+  // changes its mind mid-flight and never settles into a loop.
+  if (dx * dx + dy * dy < 900 || Math.random() < 0.004) pickIdleTarget();
+
+  ship.vx += Math.max(-1, Math.min(1, dx * 0.02)) * 0.09;
+  ship.vy += Math.max(-1, Math.min(1, dy * 0.02)) * 0.08;
+  ship.vx *= 0.975;
+  ship.vy *= 0.972;
+  ship.x += ship.vx;
+  ship.y += ship.vy;
+
+  // Run the visible engines to match the motion, so the flame and the
+  // retro jets tell the truth even on autopilot.
+  const climbing = ship.vy < -0.15 ? 1 : 0;
+  const dropping = ship.vy > 0.5 ? 1 : 0;
+  ship.thrustLevel += (climbing - ship.thrustLevel) * 0.05;
+  ship.reverseLevel += (dropping - ship.reverseLevel) * 0.05;
+}
+
+/* ------------------------------------------------------------------
+   UPDATE: one fixed physics step
+------------------------------------------------------------------ */
+function update() {
+  frame++;
+
+  // Particles and screen shake keep running after death, so they are
+  // updated regardless of state.
+  for (const p of particles) {
+    p.x += p.vx;
+    // Exhaust and debris ride the world, so they have to speed up with
+    // it during a burn or they visibly lag behind the rocks.
+    const drift = scroll * (1 + (CONFIG.boostScrollMult - 1) * boostLevel) * 0.3;
+    p.y += p.vy + (state === "playing" ? drift : 0);
+    p.vy += 0.06;
+    p.vx *= 0.99;
+    p.life -= p.decay;
+  }
+  particles = particles.filter((p) => p.life > 0);
+  if (shake > 0) shake *= 0.88;
+
+  if (state === "dead") {
+    deadFrames++;
+    boostLevel *= 0.94;      // otherwise the stars stay streaked on the
+                             // death screen, which looks like a bug
+    for (const s of stars) {
+      s.y += s.speed * scroll * 0.3;
+      if (s.y > H) { s.y -= H; s.x = Math.random() * W; }
+    }
+    return;
+  }
+
+  if (state !== "playing") {
+    idleFly();
+    for (const s of stars) {
+      s.y += s.speed * CONFIG.scrollStart * 0.4;
+      if (s.y > H) { s.y -= H; s.x = Math.random() * W; }
+    }
+    return;
+  }
+
+  elapsed += 1 / 60;
+
+  // Difficulty ramp.
+  scroll = Math.min(CONFIG.scrollMax,
+                    CONFIG.scrollStart + elapsed * CONFIG.scrollRampPerSec);
+  spawnEvery = Math.max(CONFIG.spawnEveryMin,
+                        CONFIG.spawnEveryStart - elapsed * CONFIG.spawnRampPerSec);
+
+  // The booster eases in and out the same way the main engine does, so it
+  // reads as a second rocket lighting rather than a switch flipping. Every
+  // piece of the world moves at worldSpeed, which the burn multiplies.
+  if (boostTimer > 0) boostTimer--;
+  boostLevel += ((boostTimer > 0 ? 1 : 0) - boostLevel) * CONFIG.boostSpool;
+  const worldSpeed = scroll * (1 + (CONFIG.boostScrollMult - 1) * boostLevel);
+
+  // --- Ship physics -------------------------------------------------
+  // The engine eases toward full power rather than snapping to it, so
+  // holding the key gives you thrust a fraction of a second later, and
+  // letting go leaves the burner still fading.
+  // Both engines spool the same way. Holding both at once makes them
+  // fight each other, which is a fair thing to let the player discover.
+  ship.thrustLevel += ((keys.up ? 1 : 0) - ship.thrustLevel) *
+                      (keys.up ? CONFIG.thrustSpoolUp : CONFIG.thrustSpoolDown);
+  ship.reverseLevel += ((keys.down ? 1 : 0) - ship.reverseLevel) *
+                       (keys.down ? CONFIG.thrustSpoolUp : CONFIG.thrustSpoolDown);
+
+  const boostPush = 1 + (CONFIG.boostThrustMult - 1) * boostLevel;
+  ship.vy += CONFIG.gravity;
+  ship.vy -= CONFIG.thrust * ship.thrustLevel * boostPush;
+  ship.vy += CONFIG.reverseThrust * ship.reverseLevel;
+  ship.vy = Math.max(-CONFIG.maxRiseSpeed * boostPush,
+                     Math.min(CONFIG.maxFallSpeed, ship.vy));
+
+  if (keys.left)  ship.vx -= CONFIG.sideAccel;
+  if (keys.right) ship.vx += CONFIG.sideAccel;
+  if (!keys.left && !keys.right) ship.vx *= CONFIG.sideFriction;
+  ship.vx = Math.max(-CONFIG.sideMaxSpeed, Math.min(CONFIG.sideMaxSpeed, ship.vx));
+
+  ship.x += ship.vx;
+  ship.y += ship.vy;
+
+  // Walls: bounce off the sides, bump against the ceiling.
+  if (ship.x < CONFIG.shipRadius) { ship.x = CONFIG.shipRadius; ship.vx *= -0.4; }
+  if (ship.x > W - CONFIG.shipRadius) { ship.x = W - CONFIG.shipRadius; ship.vx *= -0.4; }
+  if (ship.y < CONFIG.ceiling) { ship.y = CONFIG.ceiling; ship.vy = 0; }
+
+  // Falling off the bottom ends the run.
+  if (ship.y - CONFIG.shipRadius > H) {
+    die(false);
+    return;
+  }
+
+  if (ship.thrustLevel > 0.15 && Math.random() < ship.thrustLevel) {
+    burst(ship.x, ship.y + 13, 1, "255, 200, 130");
+  }
+  if (ship.reverseLevel > 0.2 && Math.random() < ship.reverseLevel * 0.6) {
+    burst(ship.x + (Math.random() < 0.5 ? -7 : 7), ship.y - 7, 1, "190, 215, 255");
+  }
+  if (boostLevel > 0.1) {
+    burst(ship.x + (Math.random() - 0.5) * 10, ship.y + 16, 2, "255, 150, 70");
+    shake = Math.max(shake, boostLevel * 3);
+  }
+
+  // --- World --------------------------------------------------------
+  altitude += worldSpeed;
+
+  for (const s of stars) {
+    s.y += s.speed * worldSpeed;
+    if (s.y > H) { s.y -= H; s.x = Math.random() * W; }
+  }
+
+  spawnTimer--;
+  if (spawnTimer <= 0) {
+    spawnAsteroid();
+    // Scale the spawn rate to the width of the playfield, so a wide
+    // window gets proportionally more rocks instead of a near-empty field.
+    spawnTimer = spawnEvery * (BOX_W / W);
+  }
+
+  for (const a of asteroids) {
+    a.y += worldSpeed;
+    a.x += a.drift;
+    a.rot += a.spin;
+    if (a.x < a.r) { a.x = a.r; a.drift *= -1; }
+    if (a.x > W - a.r) { a.x = W - a.r; a.drift *= -1; }
+  }
+  asteroids = asteroids.filter((a) => a.y - a.r < H + 40);
+
+  // --- Power-ups ----------------------------------------------------
+  powerupTimer--;
+  if (powerupTimer <= 0) {
+    spawnPowerup();
+    powerupTimer = CONFIG.powerupEveryMin +
+                   Math.random() * (CONFIG.powerupEveryMax - CONFIG.powerupEveryMin);
+  }
+
+  for (const p of powerups) {
+    p.y += worldSpeed * 0.8;        // drifts a little slower than the rocks
+    p.x += Math.sin(frame * 0.04 + p.phase) * 0.7 + p.drift;
+    p.x = Math.max(CONFIG.powerupRadius, Math.min(W - CONFIG.powerupRadius, p.x));
+  }
+
+  for (const p of powerups) {
+    const dx = p.x - ship.x;
+    const dy = p.y - ship.y;
+    const reach = CONFIG.powerupRadius + CONFIG.shipRadius + 3;
+    if (dx * dx + dy * dy < reach * reach) {
+      p.collected = true;
+      // Picking one up while already armed extends the timer rather
+      // than replacing it, so a lucky run can stay hot.
+      if (p.kind === "boost") {
+        boostTimer = Math.min(CONFIG.boostDuration * 2,
+                              boostTimer + CONFIG.boostDuration);
+        burst(p.x, p.y, 28, "255, 160, 80");
+        shake = Math.max(shake, 9);
+      } else {
+        weaponTimer = Math.min(CONFIG.weaponDuration * 2,
+                               weaponTimer + CONFIG.weaponDuration);
+        burst(p.x, p.y, 22, "140, 255, 210");
+      }
+    }
+  }
+  powerups = powerups.filter((p) => !p.collected && p.y - CONFIG.powerupRadius < H + 40);
+
+  // --- Lasers -------------------------------------------------------
+  if (weaponTimer > 0) weaponTimer--;
+  if (fireCooldown > 0) fireCooldown--;
+
+  // A burst is three bolts spaced a few frames apart. burstRemaining
+  // counts them down, so once a burst starts it always finishes, even
+  // if you let go of the key.
+  if (keys.fire && weaponTimer > 0 && fireCooldown <= 0 && burstRemaining <= 0) {
+    burstRemaining = CONFIG.shotsPerBurst;
+    burstTimer = 0;
+    fireCooldown = CONFIG.fireEvery + CONFIG.shotsPerBurst * CONFIG.shotGap;
+  }
+  if (burstRemaining > 0) {
+    if (burstTimer <= 0) {
+      fireBolt();
+      burstRemaining--;
+      burstTimer = CONFIG.shotGap;
+    } else {
+      burstTimer--;
+    }
+  }
+
+  for (const b of bullets) {
+    b.x += b.vx;
+    b.y += b.vy + worldSpeed * 0.5; // the world still slides past them
+  }
+
+  // A bolt that hits a rock destroys both. Marking and filtering is
+  // safer than splicing arrays while looping over them.
+  for (const b of bullets) {
+    for (const a of asteroids) {
+      if (a.destroyed) continue;
+      const dx = a.x - b.x;
+      const dy = a.y - b.y;
+      if (dx * dx + dy * dy < (a.r * 0.9 + 3) * (a.r * 0.9 + 3)) {
+        a.destroyed = true;
+        b.spent = true;
+        burst(a.x, a.y, Math.round(10 + a.r), "150, 170, 210");
+        altitude += 120;            // a small score bounty for clearing one
+        shake = Math.max(shake, 4);
+        break;
+      }
+    }
+  }
+  bullets = bullets.filter((b) => !b.spent && b.y > -20 && b.x > -20 && b.x < W + 20);
+  asteroids = asteroids.filter((a) => !a.destroyed);
+
+  // --- Collision ----------------------------------------------------
+  // While the booster is lit you are not dodging rocks, you are going
+  // through them. The burn has to be well alight to count, so the moment
+  // it fades you are vulnerable again.
+  const invulnerable = boostLevel > 0.25;
+  let smashed = false;
+
+  for (const a of asteroids) {
+    const dx = a.x - ship.x;
+    const dy = a.y - ship.y;
+    const hitDistance = a.r * 0.82 + CONFIG.shipRadius;
+    if (dx * dx + dy * dy < hitDistance * hitDistance) {
+      if (!invulnerable) {
+        die(true);
+        return;
+      }
+      a.destroyed = true;
+      smashed = true;
+      burst(a.x, a.y, Math.round(12 + a.r), "255, 170, 100");
+      altitude += 120;
+      shake = Math.max(shake, 7);
+    }
+  }
+  if (smashed) asteroids = asteroids.filter((a) => !a.destroyed);
+}
+
+function die(collided) {
+  state = "dead";
+  deadFrames = 0;
+  shake = collided ? 14 : 6;
+  burst(ship.x, ship.y, 60, "255, 170, 90");
+  burst(ship.x, ship.y, 25, "255, 240, 200");
+
+  const score = Math.floor(altitude / 10);
+  if (score > best) {
+    best = score;
+    saveBest(best);
+  }
+}
+
+/* ------------------------------------------------------------------
+   DRAW
+------------------------------------------------------------------ */
+function drawShip() {
+  const t = ship.thrustLevel;
+
+  ctx.save();
+  ctx.translate(ship.x, ship.y);
+  ctx.rotate(Math.max(-0.4, Math.min(0.4, ship.vx * 0.07)));  // bank into the turn
+
+  // The booster is a second, much larger rocket, and it burns whether or
+  // not you are holding the main engine. Drawn first so the main exhaust
+  // sits inside it.
+  const b = boostLevel;
+  if (b > 0.03) {
+    const len = (26 + Math.random() * 18) * b;
+    ctx.beginPath();
+    ctx.moveTo(-7.5, 9);
+    ctx.quadraticCurveTo(-7, 16 + len * 0.6, 0, 18 + len);
+    ctx.quadraticCurveTo(7, 16 + len * 0.6, 7.5, 9);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255, 120, 40, " + (0.35 + 0.5 * b) + ")";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(-4, 9);
+    ctx.quadraticCurveTo(-3.5, 14 + len * 0.4, 0, 14 + len * 0.6);
+    ctx.quadraticCurveTo(3.5, 14 + len * 0.4, 4, 9);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255, 238, 195, " + (0.45 + 0.45 * b) + ")";
+    ctx.fill();
+  }
+
+  // Exhaust: a rounded puff rather than a sharp spike, sized by how
+  // spun-up the engine is, so you can see the lag you are feeling.
+  if (t > 0.03) {
+    const puff = (9 + Math.random() * 9) * t;
+    ctx.beginPath();
+    ctx.moveTo(-5.5, 10);
+    ctx.quadraticCurveTo(-5, 12 + puff, 0, 14 + puff * 1.3);
+    ctx.quadraticCurveTo(5, 12 + puff, 5.5, 10);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255, 170, 90, " + (0.35 + 0.5 * t) + ")";
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(-2.6, 10);
+    ctx.quadraticCurveTo(-2.4, 11 + puff * 0.5, 0, 11 + puff * 0.7);
+    ctx.quadraticCurveTo(2.4, 11 + puff * 0.5, 2.6, 10);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(255, 245, 215, " + (0.5 + 0.4 * t) + ")";
+    ctx.fill();
+  }
+
+  // Retro thrusters: two little jets on the shoulders, firing upward to
+  // push the ship down. Drawn before the body so the nozzles sit under it.
+  const r = ship.reverseLevel;
+  if (r > 0.03) {
+    const jet = (4 + Math.random() * 5) * r;
+    ctx.fillStyle = "rgba(190, 220, 255, " + (0.3 + 0.55 * r) + ")";
+    for (const side of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(side * 4.5, -4);
+      ctx.lineTo(side * 9, -5);
+      ctx.lineTo(side * 7, -11 - jet);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  // Fins, drawn behind the body.
+  ctx.fillStyle = "#ff8f6b";
+  for (const side of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(side * 5, 1);
+    ctx.quadraticCurveTo(side * 15, 7, side * 11.5, 13);
+    ctx.lineTo(side * 5.5, 10.5);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Body: a fat little teardrop with a rounded nose.
+  ctx.beginPath();
+  ctx.moveTo(0, -17);
+  ctx.bezierCurveTo(6.5, -12, 8.5, -2, 7.5, 10);
+  ctx.lineTo(-7.5, 10);
+  ctx.bezierCurveTo(-8.5, -2, -6.5, -12, 0, -17);
+  ctx.closePath();
+  ctx.fillStyle = "#f4f7ff";
+  ctx.fill();
+  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = "#b9c4e0";
+  ctx.stroke();
+
+  // Collar stripe above the engine.
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = "#ff8f6b";
+  ctx.fillRect(-9, 6.5, 18, 4);
+  ctx.restore();
+
+  // Porthole with a glint.
+  ctx.beginPath();
+  ctx.arc(0, -4.5, 5, 0, Math.PI * 2);
+  ctx.fillStyle = "#1d2742";
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, -4.5, 3.6, 0, Math.PI * 2);
+  ctx.fillStyle = "#6fa8ff";
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(-1.3, -6, 1.1, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+  ctx.fill();
+
+  // Antenna. It lags behind your steering and bobs on its own, which is
+  // most of the whimsy for about eight lines of code.
+  const sway = Math.sin(frame * 0.09) * 1.6 - ship.vx * 0.9;
+  ctx.beginPath();
+  ctx.moveTo(0, -16.5);
+  ctx.quadraticCurveTo(sway * 0.4, -22, sway, -26);
+  ctx.lineWidth = 1.6;
+  ctx.strokeStyle = "#b9c4e0";
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(sway, -27.5, 2.5, 0, Math.PI * 2);
+  ctx.fillStyle = "#ffd36b";
+  ctx.fill();
+
+  // Shield, so invulnerability is visible rather than something you have
+  // to infer from surviving a hit.
+  if (b > 0.03) {
+    ctx.beginPath();
+    ctx.arc(0, -2, 21 + Math.sin(frame * 0.3) * 1.6, 0, Math.PI * 2);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255, 185, 115, " + (0.2 + 0.45 * b) + ")";
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawAsteroid(a) {
+  ctx.save();
+  ctx.translate(a.x, a.y);
+  ctx.rotate(a.rot);
+  ctx.beginPath();
+  ctx.moveTo(a.verts[0].x, a.verts[0].y);
+  for (let i = 1; i < a.verts.length; i++) ctx.lineTo(a.verts[i].x, a.verts[i].y);
+  ctx.closePath();
+  ctx.fillStyle = "#2a3048";
+  ctx.fill();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "#4b5574";
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawPowerup(p) {
+  const isBoost = p.kind === "boost";
+  const pulse = 1 + Math.sin(frame * (isBoost ? 0.17 : 0.12) + p.phase) *
+                    (isBoost ? 0.17 : 0.12);
+  const R = CONFIG.powerupRadius;
+  const rgb = isBoost ? "255, 165, 80" : "120, 255, 205";
+  const edge = isBoost ? "#ffa550" : "#78ffcd";
+  const mark = isBoost ? "#ffe6c9" : "#c9fff0";
+
+  ctx.save();
+  ctx.translate(p.x, p.y);
+
+  // Halo
+  const glow = ctx.createRadialGradient(0, 0, R * 0.4, 0, 0, R * 2.4 * pulse);
+  glow.addColorStop(0, "rgba(" + rgb + ", 0.30)");
+  glow.addColorStop(1, "rgba(" + rgb + ", 0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(-R * 2.6, -R * 2.6, R * 5.2, R * 5.2);
+
+  // Ring
+  ctx.beginPath();
+  ctx.arc(0, 0, R * pulse, 0, Math.PI * 2);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = edge;
+  ctx.stroke();
+
+  // Core
+  ctx.beginPath();
+  ctx.arc(0, 0, R * 0.62, 0, Math.PI * 2);
+  ctx.fillStyle = isBoost ? "rgba(80, 42, 18, 0.9)" : "rgba(30, 70, 62, 0.9)";
+  ctx.fill();
+
+  // The mark says what the pod does: three bolts for lasers, a double
+  // chevron for the booster.
+  ctx.strokeStyle = mark;
+  ctx.fillStyle = mark;
+  if (isBoost) {
+    ctx.lineWidth = 2;
+    for (const offset of [-1, 3.5]) {
+      ctx.beginPath();
+      ctx.moveTo(-4.5, offset + 2);
+      ctx.lineTo(0, offset - 2.5);
+      ctx.lineTo(4.5, offset + 2);
+      ctx.stroke();
+    }
+  } else {
+    for (const dx of [-4, 0, 4]) {
+      ctx.fillRect(dx - 0.9, dx === 0 ? -6 : -4.5, 1.8, dx === 0 ? 9 : 7);
+    }
+  }
+
+  ctx.restore();
+}
+
+function drawBullet(b) {
+  ctx.save();
+  ctx.translate(b.x, b.y);
+  ctx.rotate(Math.atan2(b.vy, b.vx) + Math.PI / 2);
+  ctx.fillStyle = "rgba(160, 255, 220, 0.35)";
+  ctx.fillRect(-2.5, -9, 5, 18);
+  ctx.fillStyle = "#e4fff7";
+  ctx.fillRect(-1.1, -6, 2.2, 12);
+  ctx.restore();
+}
+
+function centerText(text, y, size, color) {
+  ctx.font = size + "px ui-monospace, Menlo, Consolas, monospace";
+  ctx.textAlign = "center";
+  ctx.fillStyle = color;
+  ctx.fillText(text, W / 2, y);
+  ctx.textAlign = "left";
+}
+
+function draw() {
+  ctx.save();
+  if (shake > 0.3) {
+    ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
+  }
+
+  // Background gradient.
+  const sky = ctx.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, "#070a18");
+  sky.addColorStop(1, "#0d1024");
+  ctx.fillStyle = sky;
+  ctx.fillRect(-20, -20, W + 40, H + 40);
+
+  // Stars stretch into streaks while the booster burns. Cheapest possible
+  // sense of speed: the same rectangle, just taller.
+  for (const s of stars) {
+    ctx.fillStyle = "rgba(200, 220, 255, " + s.alpha + ")";
+    ctx.fillRect(s.x, s.y, s.size, s.size + boostLevel * scroll * s.speed * 3.5);
+  }
+
+  for (const a of asteroids) drawAsteroid(a);
+  for (const p of powerups) drawPowerup(p);
+  for (const b of bullets) drawBullet(b);
+
+  for (const p of particles) {
+    ctx.fillStyle = "rgba(" + p.color + ", " + Math.max(0, p.life) + ")";
+    ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+  }
+
+  if (state !== "dead") drawShip();
+
+  ctx.restore();
+
+  // HUD
+  const score = Math.floor(altitude / 10);
+  ctx.font = "14px ui-monospace, Menlo, Consolas, monospace";
+  ctx.fillStyle = "#8ea2d0";
+  ctx.fillText("ALT " + String(score).padStart(5, "0"), 16, 16);
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#5d6a8e";
+  ctx.fillText("BEST " + String(best).padStart(5, "0"), W - 16, 16);
+  ctx.textAlign = "left";
+
+  // Charge bars, stacked under the altitude readout. Each one only
+  // appears while that power-up is running.
+  if (state === "playing") {
+    let barY = 38;
+    const bars = [
+      { label: "LASERS", timer: weaponTimer, full: CONFIG.weaponDuration,
+        color: "#78ffcd", rgb: "120, 255, 205" },
+      { label: "BOOST", timer: boostTimer, full: CONFIG.boostDuration,
+        color: "#ffa550", rgb: "255, 165, 80" },
+    ];
+    for (const bar of bars) {
+      if (bar.timer <= 0) continue;
+      ctx.fillStyle = bar.color;
+      ctx.fillText(bar.label, 16, barY);
+      ctx.fillStyle = "rgba(" + bar.rgb + ", 0.18)";
+      ctx.fillRect(80, barY + 3, 110, 6);
+      ctx.fillStyle = bar.color;
+      ctx.fillRect(80, barY + 3, 110 * Math.min(1, bar.timer / bar.full), 6);
+      barY += 18;
+    }
+  }
+
+  if (state === "ready") {
+    centerText("ASCENT", H / 2 - 70, 44, "#e8eefc");
+    centerText("UP or DOWN to thrust", H / 2 - 20, 14, "#7e8db5");
+    centerText("LEFT or RIGHT to steer", H / 2 + 2, 14, "#7e8db5");
+    centerText("SPACE to fire", H / 2 + 24, 14, "#5fd8b0");
+    centerText("press SPACE to launch", H / 2 + 62, 16, "#4a7dff");
+  }
+
+  if (state === "dead" && deadFrames > 40) {
+    centerText("LOST", H / 2 - 50, 40, "#ffb07a");
+    centerText("altitude " + score, H / 2 - 4, 16, "#8ea2d0");
+    centerText("press SPACE to launch again", H / 2 + 40, 14, "#4a7dff");
+  }
+}
+
+/* ------------------------------------------------------------------
+   MAIN LOOP
+   requestAnimationFrame fires at whatever rate the monitor runs at,
+   which on a 120Hz screen would make the game twice as fast. The
+   accumulator below runs physics in fixed 1/60 second steps no matter
+   what, so the game plays identically on every machine.
+------------------------------------------------------------------ */
+let lastTime = performance.now();
+let accumulator = 0;
+
+function loop(now) {
+  let delta = now - lastTime;
+  lastTime = now;
+  if (delta > 250) delta = 250;   // after a tab is backgrounded, do not fast-forward
+
+  accumulator += delta;
+  while (accumulator >= STEP) {
+    update();
+    accumulator -= STEP;
+  }
+
+  draw();
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+</script>
+
+</body>
+</html>
