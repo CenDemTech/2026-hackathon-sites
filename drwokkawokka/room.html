@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crowdpleaser – Room list</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Inter:wght@400;500;600&amp;display=swap">
+<link rel="stylesheet" href="style.css">
+<script src="room.js" defer></script>
+</head>
+<body>
+
+<header class="room-header">
+  <div class="wrap-wide">
+    <a class="logo" href="index.html">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF7A59" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0 0 14 0"></path><path d="M12 17v5"></path><path d="M8 22h8"></path></svg>
+      Crowdpleaser
+    </a>
+    <div class="row" style="align-items: center">
+      <span class="muted" style="font-size: 14px">Room code</span>
+      <span class="display" style="font-weight: 700; font-size: 20px; letter-spacing: 0.12em">KX4P</span>
+      <button type="button" id="copy-link" class="chip">Copy invite link</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap-wide room-layout">
+  <main class="room-main">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <h1 class="display" style="font-weight: 800; font-size: clamp(36px, 4.5vw, 56px); line-height: 1; letter-spacing: -0.035em">Friday at Lucky Star</h1>
+      <p class="soft" style="font-size: 16px">Ranked by how many of you know each song. Karaoke classics fill the gaps.</p>
+    </div>
+
+    <section class="members" id="members" aria-label="People in this room">
+      <a href="connect.html" style="font-size: 14px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center; padding: 0 8px; order: 99">+ Add your music</a>
+    </section>
+
+    <div class="card filters">
+      <div class="filter-row" role="group" aria-labelledby="f-genre" id="genre-chips">
+        <span id="f-genre" class="filter-label">Genre</span>
+      </div>
+      <div class="filter-row" role="group" aria-labelledby="f-decade" id="decade-chips">
+        <span id="f-decade" class="filter-label">Decade</span>
+      </div>
+      <div class="filter-foot">
+        <button type="button" class="chip" id="duets" aria-pressed="false">Duets only</button>
+        <div class="row" style="align-items: center">
+          <span class="soft" style="font-size: 14px" id="result-count" aria-live="polite"></span>
+          <button type="button" class="link-btn" id="clear">Clear filters</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="empty" id="no-results" hidden>No songs match those filters yet. Try another decade or genre.</p>
+
+    <ol class="plain-list songs" id="songs"></ol>
+  </main>
+
+  <aside class="queue" aria-labelledby="queue-h">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px">
+      <h2 id="queue-h">Tonight's queue</h2>
+      <span class="ink-soft" style="font-size: 14px" id="queue-count"></span>
+    </div>
+    <p class="ink-soft" id="queue-empty" style="font-size: 15px; line-height: 1.55" hidden>Nothing queued yet. Add songs from the list.</p>
+    <ol class="plain-list" id="queue"></ol>
+    <button type="button" class="dark-btn" id="save-queue">Save queue as a playlist</button>
+    <p class="ink-soft" style="font-size: 13px; line-height: 1.5" id="queue-note">Others see song counts only, never whose library a song came from.</p>
+  </aside>
+</div>
+
+</body>
+</html>
