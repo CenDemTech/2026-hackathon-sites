@@ -172,7 +172,7 @@ a.card:hover { background: #F3D2DA; transform: translateY(-2px); }
 .pubs > div { padding: 8px 0; border-top: 1px solid #ECECF0; }
 .note { margin: 0; font-size: 14px; }
 
-/* Writing + Advising lists */
+/* Writing list */
 .list { max-width: 840px; }
 .list h2 { font-size: 20px; margin-bottom: 14px; }
 .row {

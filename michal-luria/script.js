@@ -1,7 +1,7 @@
-// Tabs: shows one section at a time based on the address (#research, #writing, ...).
+// Tabs: shows one section at a time based on the address (#research, #writing).
 // Without JavaScript every section simply shows, one after another.
 (function () {
-  var tabs = ['home', 'research', 'writing', 'advising'];
+  var tabs = ['home', 'research', 'writing'];
 
   function show() {
     var id = location.hash.replace('#', '');
