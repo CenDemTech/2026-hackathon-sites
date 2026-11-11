@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Drift · Bedtime Story Generator</title>
+  <meta name="description" content="Drift writes a new, slow-paced bedtime story every night and reads it aloud until you fall asleep.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F2C97D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F2C97D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+      Drift
+    </a>
+    <nav class="site-nav" aria-label="Main">
+      <a href="#create" aria-current="page">New story</a>
+      <a href="library.html">My stories</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>A new story every night, read softly until you're asleep.</h1>
+      <p>Pick a setting and a mood. Drift writes an original, slow-paced story and reads it aloud, fading out gently when the timer ends.</p>
+    </section>
+
+    <div class="layout">
+      <section id="create" class="card builder" aria-labelledby="create-h">
+        <h2 id="create-h">Build tonight's story</h2>
+
+        <div class="field">
+          <span class="field-label" id="audience-l">Who's listening?</span>
+          <div class="chips" data-choice="audience" role="group" aria-labelledby="audience-l">
+            <button type="button" class="chip" data-value="adults" aria-pressed="true">For me</button>
+            <button type="button" class="chip" data-value="kids" aria-pressed="false">For my kids</button>
+          </div>
+          <div class="kids-box" id="kids-box" hidden>
+            <span class="field-label" id="age-l">Age</span>
+            <div class="chips" data-choice="age" role="group" aria-labelledby="age-l">
+              <button type="button" class="chip" data-value="3-5" aria-pressed="false">Ages 3–5</button>
+              <button type="button" class="chip" data-value="6-8" aria-pressed="true">Ages 6–8</button>
+              <button type="button" class="chip" data-value="9-12" aria-pressed="false">Ages 9–12</button>
+            </div>
+            <span class="note">Kids' stories use simple words, kind characters and a happy, sleepy ending, with nothing scary. Add your child's name as the main character to make it theirs.</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label" id="theme-l">Setting</span>
+          <div class="themes" data-choice="theme" role="group" aria-labelledby="theme-l" id="themes"></div>
+        </div>
+
+        <div class="field">
+          <span class="field-label" id="mood-l">Mood</span>
+          <div class="chips" data-choice="mood" role="group" aria-labelledby="mood-l">
+            <button type="button" class="chip" data-value="calm" aria-pressed="true">Calm</button>
+            <button type="button" class="chip" data-value="cozy" aria-pressed="false">Cozy</button>
+            <button type="button" class="chip" data-value="dreamy" aria-pressed="false">Dreamy</button>
+            <button type="button" class="chip" data-value="nostalgic" aria-pressed="false">Nostalgic</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label class="field-label" for="hero">Main character (optional)</label>
+            <input class="input" id="hero" type="text" maxlength="60" autocomplete="off" placeholder="e.g. a sleepy otter named Pip">
+          </div>
+          <div class="field">
+            <label class="field-label" for="voice">Narrator voice</label>
+            <select class="input" id="voice">
+              <option value="soft">Soft &amp; low</option>
+              <option value="warm">Warm storyteller</option>
+              <option value="whisper">Gentle whisper</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label" id="timer-l">Sleep timer</span>
+          <div class="chips" data-choice="timer" role="group" aria-labelledby="timer-l">
+            <button type="button" class="chip" data-value="10" aria-pressed="false">10 min</button>
+            <button type="button" class="chip" data-value="20" aria-pressed="true">20 min</button>
+            <button type="button" class="chip" data-value="30" aria-pressed="false">30 min</button>
+            <button type="button" class="chip" data-value="45" aria-pressed="false">45 min</button>
+          </div>
+          <span class="note">The voice slows and fades out over the last two minutes.</span>
+        </div>
+
+        <button type="button" class="btn-primary" id="generate">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"></path><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"></path></svg>
+          <span id="generate-label">Create story</span>
+        </button>
+      </section>
+
+      <aside class="side" aria-label="Player">
+        <div class="card" id="player">
+          <div id="player-empty" class="empty">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#7A64A3" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path></svg>
+            <h3>Nothing playing yet</h3>
+            <p>Choose a setting and press Create story. Your story will start here.</p>
+          </div>
+
+          <div id="player-story" hidden>
+            <div class="player-head">
+              <span class="eyebrow" id="status">Now playing</span>
+              <h3 id="story-title"></h3>
+              <span class="meta" id="story-meta"></span>
+            </div>
+            <p class="story-text" id="story-text"></p>
+            <div>
+              <div class="progress" aria-hidden="true"><div id="progress-bar"></div></div>
+              <div class="times"><span id="time-elapsed">0:00</span><span id="time-total">20:00</span></div>
+            </div>
+            <div class="controls">
+              <button type="button" class="round" id="back" aria-label="Replay the last few sentences">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"></path><path d="M3 3v5h5"></path></svg>
+              </button>
+              <button type="button" class="round big" id="play" aria-label="Play">
+                <svg id="icon-pause" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" hidden><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+                <svg id="icon-play" width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg>
+              </button>
+              <button type="button" class="round" id="again" aria-label="New story, same settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"></path><path d="M21 3v5h-5"></path></svg>
+              </button>
+            </div>
+            <p class="note" id="speech-note" hidden>Your browser can't read aloud, so the story will scroll by on screen at a gentle reading pace.</p>
+          </div>
+        </div>
+
+        <div class="sound-card">
+          <span class="field-label" id="sound-l">Background sound</span>
+          <div class="chips" data-choice="sound" role="group" aria-labelledby="sound-l">
+            <button type="button" class="chip" data-value="none" aria-pressed="true">None</button>
+            <button type="button" class="chip" data-value="rain" aria-pressed="false">Rain</button>
+            <button type="button" class="chip" data-value="waves" aria-pressed="false">Waves</button>
+            <button type="button" class="chip" data-value="fire" aria-pressed="false">Crackling fire</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer class="site-footer">Made by atonull for the CDT Staff Hackathon. Stories are saved only on this device.</footer>
+
+  <script src="story.js"></script>
+  <script src="sound.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
