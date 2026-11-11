@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Red Planet Ledger</title>
+<meta name="description" content="A two-player Terraforming Mars log: 196 games on a spinning globe of Mars, with overall statistics and corporation performance.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="page">
+
+<header class="site-header">
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L25 8 L25 20 L14 26 L3 20 L3 8 Z" fill="none" stroke="#EE7B30" stroke-width="2"/><circle cx="14" cy="14" r="4" fill="#EE7B30"/></svg>
+    <span>Red Planet Ledger</span>
+  </div>
+  <nav class="site-nav" aria-label="Sections">
+    <a href="#globe">Globe</a><a href="#overall">Overall statistics</a><a href="#corps">Corporations</a>
+  </nav>
+</header>
+
+<main>
+<!-- ===================== Globe ===================== -->
+<section id="globe" class="section">
+  <div class="intro">
+    <p class="eyebrow">Terraforming Mars · 2 players · Jan 2025 – Oct 2026</p>
+    <h1>Terraforming Mars</h1>
+  </div>
+
+  <div class="globe-layout">
+    <div class="col col-globe">
+      <div class="globe-frame">
+        <svg id="globeSvg" class="tm-globe" viewBox="0 0 560 560" role="img" aria-label="Rotating globe of Mars with one hex marker per game, placed on the region each map is named for and colored by winner. Drag to rotate.">
+          <defs>
+            <radialGradient id="tmSphere" cx="38%" cy="34%" r="70%"><stop offset="0%" stop-color="#B9573A"/><stop offset="55%" stop-color="#7A3020"/><stop offset="100%" stop-color="#2B100A"/></radialGradient>
+            <radialGradient id="tmShade" cx="50%" cy="50%" r="50%"><stop offset="72%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity=".55"/></radialGradient>
+            <radialGradient id="tmHalo" cx="50%" cy="50%" r="50%"><stop offset="86%" stop-color="#E8875F" stop-opacity="0"/><stop offset="91%" stop-color="#E8875F" stop-opacity=".22"/><stop offset="100%" stop-color="#E8875F" stop-opacity="0"/></radialGradient>
+          </defs>
+          <circle cx="280" cy="280" r="278" fill="url(#tmHalo)"/>
+          <circle cx="280" cy="280" r="250" fill="url(#tmSphere)"/>
+          <g id="globeSurface"></g>
+          <circle cx="280" cy="280" r="250" fill="url(#tmShade)" pointer-events="none"/>
+          <g id="globeLabels"></g>
+        </svg>
+        <div class="legend" aria-hidden="true">
+          <span><i class="swatch swatch-a"></i>Player A win</span>
+          <span><i class="swatch swatch-b"></i>Player B win</span>
+        </div>
+      </div>
+
+      <div class="card replay">
+        <label for="tmScrub" class="replay-label"><span>Replay the log</span><span class="tm-num replay-pos" id="scrubPos"></span></label>
+        <input id="tmScrub" class="tm-range" type="range" min="0" max="195" step="1">
+        <div class="btn-row">
+          <button type="button" class="tm-btn" id="btnPlay"></button>
+          <button type="button" class="tm-btn" id="btnPrev" aria-label="Previous game"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 L5 8 L10 13" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+          <button type="button" class="tm-btn" id="btnNext" aria-label="Next game"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3 L11 8 L6 13" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+          <button type="button" class="tm-btn" id="btnLatest">Latest game</button>
+          <button type="button" class="tm-btn" id="btnSpin"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col col-side">
+      <div class="card game-card" aria-live="polite">
+        <div class="game-head">
+          <span class="eyebrow-sm" id="gameNum"></span>
+          <span class="muted" id="gameDate"></span>
+        </div>
+        <div class="score-grid">
+          <div class="score" id="scoreA">
+            <span class="muted">Player A</span>
+            <span class="tm-num score-val score-a" id="scoreAVal"></span>
+            <span class="score-corp" id="scoreACorp"></span>
+          </div>
+          <div class="score" id="scoreB">
+            <span class="muted">Player B</span>
+            <span class="tm-num score-val score-b" id="scoreBVal"></span>
+            <span class="score-corp" id="scoreBCorp"></span>
+          </div>
+        </div>
+        <div class="facts">
+          <div><span class="muted">Winner</span><strong id="gameWinner"></strong></div>
+          <div><span class="muted">Map</span><strong id="gameMap"></strong></div>
+          <div><span class="muted">Generations</span><strong id="gameGens"></strong></div>
+        </div>
+        <p class="note" id="gameNote" hidden></p>
+        <div class="running">
+          <div class="running-row"><span class="muted">Record through this game</span><span class="tm-num" id="runRecord"></span></div>
+          <div class="split-bar"><div id="runBar" class="split-a"></div><div class="split-b"></div></div>
+          <div class="streak">Current streak: <span id="streak"></span></div>
+        </div>
+      </div>
+
+      <div class="card maps-card">
+        <div class="card-head"><h2>Maps</h2><span class="hint">Select a map to center it on the globe</span></div>
+        <div class="chip-grid" id="boardBtns"></div>
+        <div class="region" id="region" hidden>
+          <div class="region-head"><span class="region-name" id="rgName"></span><span class="tm-num muted" id="rgGames"></span></div>
+          <div class="region-grid">
+            <div><span class="muted">Wins</span><br><span class="tm-num" id="rgWins"></span></div>
+            <div><span class="muted">Player B win share</span><br><span class="tm-num" id="rgShare"></span></div>
+            <div><span class="muted">Avg score</span><br><span class="tm-num" id="rgAvg"></span></div>
+            <div><span class="muted">Avg generations</span><br><span class="tm-num" id="rgGens"></span></div>
+            <div><span class="muted">High score on map</span><br><span class="tm-num" id="rgHigh"></span></div>
+          </div>
+          <button type="button" class="tm-btn" id="btnClearRegion">Show all maps</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Overall statistics ===================== -->
+<section id="overall" class="section">
+  <div class="intro">
+    <h2 class="section-title">Overall statistics</h2>
+    <p class="lede">Scoring and win totals for both players across all 196 games. Select a record to show that game on the globe.</p>
+  </div>
+  <div class="stats-layout">
+    <div class="card table-card">
+      <table class="tm-table">
+        <thead><tr><th scope="col">Statistic</th><th scope="col" class="col-a">Player A</th><th scope="col" class="col-b">Player B</th></tr></thead>
+        <tbody>
+          <tr><td>Wins</td><td class="tm-num">148 (75.5%)</td><td class="tm-num">48 (24.5%)</td></tr>
+          <tr><td>Wins, 2025</td><td class="tm-num">90 of 112</td><td class="tm-num">22 of 112</td></tr>
+          <tr><td>Wins, 2026</td><td class="tm-num">58 of 84</td><td class="tm-num">26 of 84</td></tr>
+          <tr><td>Average score</td><td class="tm-num">101.5</td><td class="tm-num">91.1</td></tr>
+          <tr><td>Median score</td><td class="tm-num">101</td><td class="tm-num">89</td></tr>
+          <tr><td>Average score in wins</td><td class="tm-num">104.3</td><td class="tm-num">104.9</td></tr>
+          <tr><td>Average margin in wins</td><td class="tm-num">17.6</td><td class="tm-num">12.1</td></tr>
+          <tr><td>Highest / lowest score</td><td class="tm-num">152 / 67</td><td class="tm-num">144 / 58</td></tr>
+          <tr><td>Longest win streak</td><td class="tm-num">17</td><td class="tm-num">3</td></tr>
+          <tr><td>Total points</td><td class="tm-num">19,893</td><td class="tm-num">17,864</td></tr>
+          <tr><td>Tiebreak wins</td><td class="tm-num">2</td><td class="tm-num">2</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card records-card">
+      <h3>Records</h3>
+      <div class="chip-grid" id="records"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== Corporations ===================== -->
+<section id="corps" class="section">
+  <div class="intro">
+    <h2 class="section-title section-title-lg">Corporation performance</h2>
+    <p class="lede">Results for all 41 corporations played. Player A won 75.5% of games, so a corporation’s raw win rate largely reflects which player used it. The default sort compares each score with that player’s overall average (Player A 101.5, Player B 91.1).</p>
+  </div>
+  <div class="filters">
+    <div class="filter"><span class="filter-label" id="lblPlayer">Player</span><div class="btn-row" role="group" aria-labelledby="lblPlayer" id="filterPlayer"></div></div>
+    <div class="filter"><span class="filter-label" id="lblMin">Minimum games</span><div class="btn-row" role="group" aria-labelledby="lblMin" id="filterMin"></div></div>
+    <div class="filter"><span class="filter-label" id="lblSort">Sort by</span><div class="btn-row" role="group" aria-labelledby="lblSort" id="filterSort"></div></div>
+  </div>
+  <div class="summary-grid">
+    <div class="card summary"><span class="filter-label">Most above average</span><span class="summary-val" id="bestName"></span><span class="tm-num summary-sub" id="bestSub"></span></div>
+    <div class="card summary"><span class="filter-label">Most below average</span><span class="summary-val" id="worstName"></span><span class="tm-num summary-sub" id="worstSub"></span></div>
+    <div class="card summary"><span class="filter-label">Shown</span><span class="summary-val" id="corpCount"></span><span class="summary-sub">Small samples swing widely; 5+ games is a steadier read.</span></div>
+  </div>
+  <div class="card table-card">
+    <table class="tm-table corp-table">
+      <thead><tr><th scope="col">Corporation</th><th scope="col">Record</th><th scope="col">Win rate</th><th scope="col">Avg score</th><th scope="col" class="col-delta">Points vs. own average</th><th scope="col">A · B</th></tr></thead>
+      <tbody id="corpRows"></tbody>
+    </table>
+  </div>
+  <p class="footnote">Green bars are above the player’s average; rust bars are below it. Records are wins–losses for the selected player(s); the last column shows each player’s record with that corporation.</p>
+</section>
+</main>
+
+<footer class="site-footer">Source: game log, 196 games from Jan. 4, 2025 to Oct. 25, 2026. Corporations were not recorded for three games (July 12–15, 2026); those games are left out of the corporation table. Map markers are placed on the real Martian regions the boards are named for; their position within a region is arbitrary.</footer>
+</div>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
