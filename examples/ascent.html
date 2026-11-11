@@ -68,6 +68,59 @@
     transition: opacity 0.15s;
   }
   #expand:hover { opacity: 1; color: #d6ddf0; }
+
+  /* Mobile Safari's 100vh includes the hidden address bar; dvh is the
+     visible area, which matches the innerHeight the game sizes itself to. */
+  @supports (height: 100dvh) { canvas.expanded { height: 100dvh; } }
+
+  /* On-screen controls, shown only on touchscreens. Steering on the
+     left thumb, fire on the right, translucent so the game shows through. */
+  #touch { display: none; }
+  @media (hover: none) and (pointer: coarse) {
+    #touch {
+      display: flex;
+      position: fixed;
+      left: 0; right: 0;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      padding: 0 14px;
+      justify-content: space-between;
+      align-items: flex-end;
+      z-index: 20;
+      pointer-events: none;        /* only the buttons themselves catch touches */
+    }
+    .tpad {
+      display: grid;
+      grid-template-columns: repeat(3, 56px);
+      grid-template-rows: repeat(2, 56px);
+      gap: 6px;
+    }
+    .tpad .u { grid-area: 1 / 2; } .tpad .l { grid-area: 2 / 1; }
+    .tpad .d { grid-area: 2 / 2; } .tpad .r { grid-area: 2 / 3; }
+    #touch button {
+      pointer-events: auto;
+      font: inherit;
+      font-size: 18px;
+      color: #d6ddf0;
+      background: rgba(20, 28, 54, 0.45);
+      border: 1px solid rgba(90, 110, 170, 0.5);
+      border-radius: 10px;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    #touch button.on { background: rgba(74, 125, 255, 0.55); }
+    #touch .fire {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      color: #5fd8b0;
+      border-color: rgba(95, 216, 176, 0.6);
+    }
+    #touch .fire.on { background: rgba(95, 216, 176, 0.35); }
+    #expand, .hint { display: none; }   /* no keyboard; game already fills the screen */
+  }
 </style>
 </head>
 <body>
@@ -75,6 +128,15 @@
 <button id="expand" type="button">Expand</button>
 <canvas id="game"></canvas>
 <p class="hint">Up / Down: thrust &nbsp;&middot;&nbsp; Left / Right: steer &nbsp;&middot;&nbsp; Space: start and fire &nbsp;&middot;&nbsp; F: expand</p>
+<div id="touch">
+  <div class="tpad">
+    <button class="u" data-k="up" type="button" aria-label="Thrust up">&#9650;</button>
+    <button class="l" data-k="left" type="button" aria-label="Steer left">&#9664;</button>
+    <button class="d" data-k="down" type="button" aria-label="Thrust down">&#9660;</button>
+    <button class="r" data-k="right" type="button" aria-label="Steer right">&#9654;</button>
+  </div>
+  <button class="fire" data-k="fire" type="button">FIRE</button>
+</div>
 
 <script>
 "use strict";
@@ -239,11 +301,41 @@ window.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && expanded) toggleExpand();
   if (e.key === " " || e.key === "Enter") {
     e.preventDefault();
-    if (state === "playing") keys.fire = true;
-    else if (state === "ready") startRun();
-    else if (state === "dead" && deadFrames > 40) startRun();
+    pressAction();
   }
 });
+
+// Space, Enter, the FIRE button and a tap on the screen all do the same
+// thing: fire while playing, otherwise launch a new run.
+function pressAction() {
+  if (state === "playing") keys.fire = true;
+  else if (state === "ready") startRun();
+  else if (state === "dead" && deadFrames > 40) startRun();
+}
+
+// Touchscreen controls. Each button holds its key down while a finger
+// is on it, mirroring keydown/keyup above.
+const isTouch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+document.querySelectorAll("#touch [data-k]").forEach((btn) => {
+  const k = btn.dataset.k;
+  const press = (e) => {
+    e.preventDefault();
+    btn.classList.add("on");
+    if (k === "fire") pressAction(); else keys[k] = true;
+  };
+  const release = (e) => {
+    e.preventDefault();
+    btn.classList.remove("on");
+    keys[k] = false;
+  };
+  btn.addEventListener("pointerdown", press);
+  btn.addEventListener("pointerup", release);
+  btn.addEventListener("pointercancel", release);
+  btn.addEventListener("pointerleave", release);
+  btn.addEventListener("contextmenu", (e) => e.preventDefault());
+});
+// Tapping anywhere on the game launches it from the title or game-over screen.
+canvas.addEventListener("pointerdown", () => { if (state !== "playing") pressAction(); });
 
 window.addEventListener("keyup", (e) => {
   if (e.key === "ArrowUp")    keys.up = false;
@@ -989,16 +1081,16 @@ function draw() {
 
   if (state === "ready") {
     centerText("ASCENT", H / 2 - 70, 44, "#e8eefc");
-    centerText("UP or DOWN to thrust", H / 2 - 20, 14, "#7e8db5");
-    centerText("LEFT or RIGHT to steer", H / 2 + 2, 14, "#7e8db5");
-    centerText("SPACE to fire", H / 2 + 24, 14, "#5fd8b0");
-    centerText("press SPACE to launch", H / 2 + 62, 16, "#4a7dff");
+    centerText(isTouch ? "▲ ▼ to thrust" : "UP or DOWN to thrust", H / 2 - 20, 14, "#7e8db5");
+    centerText(isTouch ? "◀ ▶ to steer" : "LEFT or RIGHT to steer", H / 2 + 2, 14, "#7e8db5");
+    centerText(isTouch ? "FIRE to shoot" : "SPACE to fire", H / 2 + 24, 14, "#5fd8b0");
+    centerText(isTouch ? "tap to launch" : "press SPACE to launch", H / 2 + 62, 16, "#4a7dff");
   }
 
   if (state === "dead" && deadFrames > 40) {
     centerText("LOST", H / 2 - 50, 40, "#ffb07a");
     centerText("altitude " + score, H / 2 - 4, 16, "#8ea2d0");
-    centerText("press SPACE to launch again", H / 2 + 40, 14, "#4a7dff");
+    centerText(isTouch ? "tap to launch again" : "press SPACE to launch again", H / 2 + 40, 14, "#4a7dff");
   }
 }
 

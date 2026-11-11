@@ -89,6 +89,10 @@ canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; 
 .help { margin: 0; font: 400 13px var(--memo); color: var(--cream-dim); text-align: center; }
 @media (hover: none), (max-width: 700px) { .touch { display: flex; } .help { display: none; } }
 @media (max-width: 640px) { .hud { grid-template-columns: 1fr 1fr; } .card { padding: 18px 16px 16px; } }
+/* Phones: the game box is too short to hold the story cards, so show them full-screen instead. */
+@media (max-width: 640px) { .overlay { position: fixed; z-index: 20; padding: 16px; } }
+/* No keyboard on touchscreens, so drop the ENTER hint. */
+@media (hover: none) { .btn .hint { display: none; } }
 </style>
 
 <div class="wrap">
