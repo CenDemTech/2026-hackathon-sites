@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Face Value — follow a police face search, state by state</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #1F5BB8; --navy: #0C2340; --mid: #9DB5E0; --light: #DCE6F7;
+    --ink: #0C2340; --muted: #4d5f7a; --paper: #ffffff; --warn: #b77900;
+    --px: "Silkscreen", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-image: linear-gradient(var(--light) 1px, transparent 1px), linear-gradient(90deg, var(--light) 1px, transparent 1px);
+    background-size: 24px 24px; background-attachment: fixed;
+  }
+  img.px { image-rendering: pixelated; image-rendering: crisp-edges; display: inline-block; vertical-align: middle; }
+  a { color: var(--blue); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding-inline: 16px; }
+  .pxf { font-family: var(--px); letter-spacing: .02em; }
+
+  /* pixel boxes and buttons */
+  .box { background: #fff; border: 3px solid var(--navy); box-shadow: 5px 5px 0 var(--navy); padding: 18px; }
+  .box.soft { border-color: var(--mid); box-shadow: 5px 5px 0 var(--mid); }
+  .pbtn {
+    font: 700 13px var(--px); text-transform: uppercase; cursor: pointer;
+    background: var(--blue); color: #fff; border: 3px solid var(--navy); box-shadow: 4px 4px 0 var(--navy);
+    padding: 10px 14px; transition: transform .08s, box-shadow .08s;
+  }
+  .pbtn:hover { background: #2a6ad0; }
+  .pbtn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--navy); }
+  .pbtn.ghost { background: #fff; color: var(--navy); }
+  .pbtn.ghost:hover { background: var(--light); }
+  .pbtn:disabled { opacity: .4; cursor: default; }
+  .pbtn:focus-visible, .chip:focus-visible, .tile:focus-visible, .station:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+  /* top nav */
+  nav.top { position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.96); border-bottom: 3px solid var(--navy); padding-top: env(safe-area-inset-top, 0px); }
+  nav.top .wrap { display: flex; align-items: center; gap: 14px; height: 56px; overflow-x: auto; }
+  nav.top .brand { display: flex; align-items: center; gap: 8px; font: 700 15px var(--px); color: var(--navy); text-decoration: none; white-space: nowrap; }
+  nav.top .links { display: flex; gap: 4px; margin-left: auto; }
+  nav.top .links a { font: 12px var(--px); color: var(--navy); text-decoration: none; padding: 6px 8px; white-space: nowrap; }
+  nav.top .links a:hover { background: var(--light); }
+
+  .banner { font: 11px var(--px); color: var(--blue); border: 2px solid var(--blue); display: inline-block; padding: 3px 8px; background: #fff; }
+
+  section { padding: 56px 0 8px; }
+  .kicker { font: 13px var(--px); color: var(--blue); margin: 0 0 6px; }
+  h1 { font: 700 clamp(28px, 6vw, 52px)/1.05 var(--px); margin: 14px 0 14px; letter-spacing: -.01em; }
+  h2 { font: 700 clamp(22px, 3.6vw, 32px)/1.15 var(--px); margin: 0 0 10px; }
+  h3 { font: 700 16px var(--px); margin: 0 0 8px; }
+  .lede { font-size: 19px; color: var(--muted); max-width: 720px; margin: 0 0 22px; }
+  p { margin: 0 0 12px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 14px; }
+
+  /* hero */
+  .hero { padding-top: 34px; position: relative; overflow: hidden; }
+  .hero-row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; align-items: center; }
+  @media (max-width: 820px) { .hero-row { grid-template-columns: 1fr; } }
+  .scene { position: relative; height: 230px; border: 3px solid var(--navy); box-shadow: 6px 6px 0 var(--navy); background: #fff; overflow: hidden; }
+  .scene .ground { position: absolute; left: 0; right: 0; bottom: 40px; height: 3px; background: var(--navy); }
+  .scene .walker { position: absolute; bottom: 43px; left: -70px; animation: walk 9s linear infinite; }
+  .scene .walker img { width: 64px; height: 64px; animation: hop .5s steps(2) infinite; }
+  .scene .cam { position: absolute; top: 18px; right: 22px; }
+  .scene .beam { position: absolute; top: 60px; right: 40px; width: 2px; height: 128px; background: var(--blue); transform-origin: top; animation: sweep 3s ease-in-out infinite alternate; opacity: .6; }
+  .scene .scanbox { position: absolute; bottom: 43px; width: 74px; height: 74px; border: 3px dashed var(--blue); animation: walk 9s linear infinite; left: -75px; opacity: 0; animation-name: scanwalk; }
+  .scene .tag { position: absolute; bottom: 8px; left: 12px; font: 12px var(--px); color: var(--muted); }
+  @keyframes walk { from { left: -70px; } to { left: 105%; } }
+  @keyframes scanwalk { 0% { left: -75px; opacity: 0; } 40% { opacity: 0; } 50% { opacity: 1; } 70% { opacity: 1; } 75% { opacity: 0; } 100% { left: calc(105% - 5px); opacity: 0; } }
+  @keyframes hop { 50% { transform: translateY(-3px); } }
+  @keyframes sweep { from { transform: rotate(18deg); } to { transform: rotate(62deg); } }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+
+  /* protections */
+  .prot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+  .prot { display: flex; gap: 12px; align-items: flex-start; }
+  .prot .n { font: 700 22px var(--px); color: var(--blue); min-width: 26px; }
+  .prot b { display: block; }
+  .legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin-top: 18px; }
+  .legend div { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; }
+
+  /* setup */
+  .setup { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; }
+  @media (max-width: 880px) { .setup { grid-template-columns: 1fr; } }
+  .presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 22px; }
+  .preset { text-align: left; cursor: pointer; font: inherit; color: inherit; background: #fff; border: 3px solid var(--mid); box-shadow: 4px 4px 0 var(--mid); padding: 12px; transition: transform .1s; }
+  .preset:hover { border-color: var(--blue); box-shadow: 4px 4px 0 var(--blue); transform: translate(-1px, -1px); }
+  .preset .pt { font: 700 13px var(--px); color: var(--navy); display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+  .preset .pd { font-size: 13.5px; color: var(--muted); }
+  .preset.on { border-color: var(--navy); box-shadow: 4px 4px 0 var(--navy); background: var(--light); }
+
+  .tiles { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; }
+  .tile { aspect-ratio: 1; cursor: pointer; font: 700 10px var(--px); display: flex; align-items: center; justify-content: center; padding: 0; border: 2px solid transparent; }
+  .tile.g-rules { background: var(--blue); color: #fff; }
+  .tile.g-zero { background: #fff; color: var(--blue); border-color: var(--blue); }
+  .tile.g-none { background: var(--light); color: #6f84a3; }
+  .tile:hover { transform: translateY(-2px); }
+  .tile.sel { outline: 3px solid var(--navy); outline-offset: 2px; transform: translateY(-2px); }
+  .maplegend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; margin-top: 10px; }
+  .maplegend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 14px; height: 14px; display: inline-block; }
+  select { font: inherit; padding: 8px; border: 3px solid var(--navy); background: #fff; width: 100%; }
+  label.lab { font: 12px var(--px); color: var(--muted); display: block; margin: 14px 0 6px; }
+
+  .pick { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font: inherit; font-size: 14px;
+    padding: 6px 10px 6px 6px; background: #fff; border: 2px solid var(--mid); color: var(--ink);
+  }
+  .chip img { width: 32px; height: 32px; }
+  .chip:hover { border-color: var(--blue); }
+  .chip[aria-pressed="true"] { border-color: var(--navy); background: var(--light); box-shadow: 3px 3px 0 var(--navy); font-weight: 700; }
+  .chip[aria-pressed="true"] img { animation: hop .6s steps(2) infinite; }
+
+  /* tour coach */
+  .coach { display: none; margin: 20px 0 0; border: 3px solid var(--blue); background: var(--light); padding: 14px 16px; box-shadow: 5px 5px 0 var(--blue); }
+  .coach.on { display: block; }
+  .coach .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+
+  /* question */
+  .question { font: 700 clamp(18px, 2.8vw, 24px)/1.35 var(--px); margin: 26px 0 8px; }
+  .question .hl { color: var(--blue); }
+  .context { color: var(--muted); max-width: 820px; }
+
+  /* stage */
+  .stage { margin-top: 18px; }
+  .trackwrap { overflow-x: auto; padding: 12px 0 4px; }
+  .track { position: relative; min-width: 720px; height: 150px; }
+  .track .road { position: absolute; left: 3%; right: 3%; top: 92px; height: 6px; background: repeating-linear-gradient(90deg, var(--navy) 0 12px, transparent 12px 20px); }
+  .track .done { position: absolute; left: 3%; top: 92px; height: 6px; background: var(--blue); width: 0; transition: width .7s steps(8); }
+  .station { position: absolute; top: 74px; transform: translateX(-50%); width: 44px; height: 44px; border: 3px solid var(--navy); background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+  .station img { width: 32px; height: 32px; }
+  .station .st { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; opacity: 0; transition: opacity .3s; }
+  .station.seen .st { opacity: 1; }
+  .station.cur { box-shadow: 0 0 0 4px var(--light), 0 0 0 7px var(--blue); }
+  .station.skipped { opacity: .3; }
+  .station .lbl { position: absolute; top: 50px; left: 50%; transform: translateX(-50%); font: 10px var(--px); white-space: nowrap; color: var(--muted); }
+  .avatar { position: absolute; top: 12px; transform: translateX(-50%); transition: left .8s steps(10); z-index: 2; display: flex; align-items: flex-end; }
+  .avatar img { width: 48px; height: 48px; }
+  .avatar img.small { width: 26px; height: 26px; margin-left: -6px; }
+  .avatar.moving img:first-child { animation: hop .25s steps(2) infinite; }
+  .avatar.stopped { animation: shake .4s steps(4) 2; }
+  @keyframes shake { 25% { transform: translateX(calc(-50% - 4px)); } 75% { transform: translateX(calc(-50% + 4px)); } }
+
+  .scenebox { display: grid; grid-template-columns: 88px 1fr; gap: 18px; min-height: 240px; }
+  @media (max-width: 640px) { .scenebox { grid-template-columns: 1fr; } }
+  .scenebox .big img { width: 80px; height: 80px; }
+  .stepno { font: 12px var(--px); color: var(--blue); }
+  .stitle { font: 700 20px/1.25 var(--px); margin: 2px 0 8px; }
+  .narr { font-size: 17px; min-height: 2.8em; }
+  .narr::after { content: "▌"; color: var(--blue); animation: blink 1s steps(2) infinite; }
+  .narr.done::after { content: ""; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
+  .controls .hint { font: 11px var(--px); color: var(--muted); margin-left: auto; }
+
+  .result { display: grid; grid-template-columns: 40px 1fr; gap: 12px; border: 2px solid var(--mid); padding: 12px; margin-top: 10px; background: #fff; animation: pop .35s steps(3) both; }
+  .result img.si { width: 40px; height: 40px; }
+  .result .rh { font: 700 13px var(--px); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .result .verdict { font-size: 15.5px; margin: 4px 0 0; }
+  .result.covered, .result.stop { border-color: var(--blue); box-shadow: 4px 4px 0 var(--blue); }
+  .result.gap { border-style: dashed; }
+  .result.review { border-color: var(--warn); }
+  .result.would { border-color: var(--blue); border-style: dashed; }
+  @keyframes pop { from { transform: scale(.94); opacity: 0; } to { transform: none; opacity: 1; } }
+  .pill { font: 10.5px var(--px); padding: 2px 6px; border: 2px solid currentColor; text-transform: uppercase; }
+  .pill.covered, .pill.stop { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .pill.partial { color: var(--blue); }
+  .pill.bypassed { color: var(--navy); background: var(--light); border-color: var(--navy); }
+  .pill.gap { color: #6f84a3; border-style: dashed; }
+  .pill.review { color: var(--warn); }
+  .pill.would { color: var(--blue); border-style: dashed; }
+  .pill.info { color: var(--muted); }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; font: 11.5px var(--px); color: var(--blue); }
+  .dbody { display: grid; gap: 10px; margin-top: 8px; font-size: 14px; }
+  .law { border-left: 4px solid var(--blue); padding-left: 10px; }
+  .law .ln { font-weight: 700; }
+  blockquote { margin: 6px 0 0; padding: 8px 10px; background: var(--light); font-size: 13.5px; }
+  blockquote cite { display: block; font: 10.5px var(--px); color: var(--muted); font-style: normal; margin-top: 4px; }
+  .bill { border: 2px solid var(--light); padding: 8px 10px; font-size: 13.5px; }
+  .bill .bn { font-weight: 700; }
+  .tag { font: 10px var(--px); padding: 1px 5px; background: var(--light); color: var(--navy); margin-left: 4px; white-space: nowrap; }
+  .tag.alive { background: var(--blue); color: #fff; }
+  .tag.check { background: #fff3d9; color: var(--warn); }
+  .sub { font: 11px var(--px); color: var(--muted); margin-top: 4px; }
+
+  /* verdict */
+  .vgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 14px 0; }
+  .vstat { border: 3px solid var(--navy); padding: 10px; background: #fff; }
+  .vstat .num { font: 700 30px var(--px); color: var(--blue); }
+  .vstat .vl { font-size: 13px; }
+  .whatif { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 10px; }
+  .whatif select { width: auto; }
+
+  /* compare */
+  .h2h { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th { font: 11px var(--px); text-align: left; padding: 8px 6px; border-bottom: 3px solid var(--navy); vertical-align: bottom; }
+  td { padding: 7px 6px; border-bottom: 1px solid var(--light); vertical-align: top; }
+  td.ic { text-align: center; }
+  td.ic img { width: 22px; height: 22px; }
+  tr.grp td { font: 11px var(--px); color: var(--blue); padding-top: 16px; border-bottom: 2px solid var(--mid); }
+  .linkbtn { font: inherit; background: none; border: 0; color: var(--blue); cursor: pointer; padding: 0; text-align: left; text-decoration: underline; }
+  .nolaw button { font: 11px var(--px); border: 2px solid var(--mid); background: #fff; padding: 2px 5px; margin: 2px; cursor: pointer; }
+  .nolaw button:hover { border-color: var(--blue); }
+
+  /* national bars */
+  .bars { display: grid; gap: 10px; }
+  .bar { display: grid; grid-template-columns: minmax(150px, 230px) 1fr; gap: 10px; align-items: center; font-size: 14px; }
+  @media (max-width: 560px) { .bar { grid-template-columns: 1fr; } }
+  .bar .track2 { height: 22px; background: var(--light); position: relative; display: flex; }
+  .bar .f { height: 100%; background: var(--blue); transition: width 1s steps(12); width: 0; }
+  .bar .p { height: 100%; background: repeating-linear-gradient(135deg, var(--blue) 0 4px, var(--mid) 4px 8px); transition: width 1s steps(12); width: 0; }
+  .bar .cnt { font: 11px var(--px); color: var(--muted); }
+
+  /* explorer */
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .tabs button { font: 700 12px var(--px); padding: 8px 12px; background: #fff; border: 3px solid var(--mid); cursor: pointer; color: var(--navy); }
+  .tabs button[aria-selected="true"] { border-color: var(--navy); background: var(--light); box-shadow: 3px 3px 0 var(--navy); }
+  .filters { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+  @media (max-width: 760px) { .filters { grid-template-columns: 1fr 1fr; } }
+  .filters input { font: inherit; padding: 8px; border: 3px solid var(--navy); width: 100%; }
+  .filters select { padding: 8px; }
+  #xtable th { cursor: pointer; user-select: none; }
+  #xtable th[data-sort]::after { content: " ↕"; color: var(--mid); }
+  #xtable tbody tr.row { cursor: pointer; }
+  #xtable tbody tr.row:hover { background: var(--light); }
+  #xtable tr.more td { background: #f6f9fe; }
+  .pchips { display: flex; flex-wrap: wrap; gap: 3px; }
+  .pchip { font: 10px var(--px); padding: 1px 5px; background: var(--blue); color: #fff; white-space: nowrap; }
+  .pchip.lim { background: #fff; color: var(--blue); border: 2px solid var(--blue); }
+  .count { font: 11px var(--px); color: var(--muted); margin-bottom: 6px; }
+
+  .gloss { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .gloss dt { font: 700 13px var(--px); color: var(--blue); }
+  .gloss dd { margin: 2px 0 0; font-size: 14.5px; }
+
+  footer { margin: 64px 0 0; padding: 22px 0 calc(40px + env(safe-area-inset-bottom, 0px)); border-top: 3px solid var(--navy); font-size: 13.5px; color: var(--muted); background: #fff; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="wrap">
+    <a class="brand" href="#top"><img class="px" src="icons/logo.svg" width="28" height="28" alt="">FACE VALUE</a>
+    <div class="links">
+      <a href="#start">Start here</a>
+      <a href="#case">Follow a case</a>
+      <a href="#compare">Compare</a>
+      <a href="#explore">Explore the data</a>
+      <a href="#words">Words</a>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap" id="top">
+
+  <!-- ============ HERO ============ -->
+  <section class="hero">
+    <div class="hero-row">
+      <div>
+        <span class="banner">PROTOTYPE · NOT LEGAL ADVICE</span>
+        <h1>What stops police from using face recognition on you?</h1>
+        <p class="lede">It depends on where you live. Follow one police investigation step by step, in any state, and see where the law steps in and where nothing does.</p>
+        <div class="cta">
+          <button class="pbtn" id="start-tour">▶ Take the guided tour</button>
+          <a class="pbtn ghost" href="#case" style="text-decoration:none">Build your own case</a>
+        </div>
+      </div>
+      <div class="scene" aria-hidden="true">
+        <div class="cam"><img class="px" src="icons/src-cctv.svg" width="48" height="48" alt=""></div>
+        <div class="beam"></div>
+        <div class="scanbox"></div>
+        <div class="walker"><img class="px" src="icons/logo.svg" alt=""></div>
+        <div class="ground"></div>
+        <div class="tag">A camera catches a face. Then what?</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ START HERE ============ -->
+  <section id="start">
+    <p class="kicker">01 · START HERE</p>
+    <h2>The 7 protections we look for</h2>
+    <p class="lede">Police can run a photo of an unknown person through software that compares it to millions of faces, like driver's license photos or mugshots. Some states put limits on that. We check every state for these seven common ones:</p>
+    <div class="box prot-grid" id="prots"></div>
+
+    <h3 style="margin-top:28px">How to read the walkthrough</h3>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <!-- ============ CASE ============ -->
+  <section id="case">
+    <p class="kicker">02 · FOLLOW A CASE</p>
+    <h2>Set up the case</h2>
+    <p class="lede">Start with a ready-made story, or pick your own state, police, camera and database.</p>
+
+    <div class="presets" id="presets"></div>
+
+    <div class="setup">
+      <div class="box soft">
+        <h3>Where?</h3>
+        <div class="tiles" id="tiles" role="group" aria-label="Pick a state"></div>
+        <div class="maplegend">
+          <span><i class="sw" style="background:var(--blue)"></i><b id="n-rules"></b>&nbsp;have protections</span>
+          <span><i class="sw" style="border:2px solid var(--blue)"></i><b id="n-zero"></b>&nbsp;have a law, but no protections</span>
+          <span><i class="sw" style="background:var(--light)"></i><b id="n-none"></b>&nbsp;have no law</span>
+        </div>
+        <label class="lab" for="state-pick">Or pick from a list</label>
+        <select id="state-pick"></select>
+      </div>
+      <div class="box soft">
+        <h3>Who is searching?</h3>
+        <div class="pick" id="p-who"></div>
+        <label class="lab">Where the photo came from</label>
+        <div class="pick" id="p-src"></div>
+        <label class="lab">What they search it against</label>
+        <div class="pick" id="p-db"></div>
+        <label class="lab">What crime?</label>
+        <div class="pick" id="p-crime"></div>
+      </div>
+    </div>
+
+    <div class="coach" id="coach" role="status">
+      <div class="row">
+        <div class="pxf" id="coach-n"></div>
+        <div style="display:flex;gap:8px"><button class="pbtn ghost" id="coach-end">End tour</button><button class="pbtn" id="coach-next">Next story ▸</button></div>
+      </div>
+      <p id="coach-t" style="margin:8px 0 0"></p>
+    </div>
+
+    <p class="question" id="question"></p>
+    <p class="context" id="context"></p>
+
+    <div class="stage box">
+      <div class="trackwrap"><div class="track" id="track"></div></div>
+      <div class="scenebox" id="scenebox">
+        <div class="big" id="sc-icon"></div>
+        <div>
+          <div class="stepno" id="sc-no"></div>
+          <div class="stitle" id="sc-title"></div>
+          <p class="narr" id="sc-narr"></p>
+          <div id="sc-results"></div>
+        </div>
+      </div>
+      <div class="controls">
+        <button class="pbtn ghost" id="back">◂ Back</button>
+        <button class="pbtn" id="next">Next step ▸</button>
+        <button class="pbtn ghost" id="auto">▶ Autoplay</button>
+        <button class="pbtn ghost" id="restart">↻ Start over</button>
+        <span class="hint">← → keys work too</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMPARE ============ -->
+  <section id="compare">
+    <p class="kicker">03 · COMPARE</p>
+    <h2>Two states, same case</h2>
+    <p class="lede">Uses the same police, camera, database and crime you picked above.</p>
+    <div class="h2h">
+      <div><label class="lab" for="cmp-a">State A</label><select id="cmp-a"></select></div>
+      <div><label class="lab" for="cmp-b">State B</label><select id="cmp-b"></select></div>
+    </div>
+    <div class="box tablewrap"><table id="h2h"></table></div>
+
+    <h2 style="margin-top:44px">Every state at a glance</h2>
+    <p class="lede" id="all-note"></p>
+    <div class="box tablewrap"><table id="matrix"></table></div>
+
+    <h2 style="margin-top:44px">How common is each protection?</h2>
+    <p class="lede">Out of 50 states plus DC. Striped means the protection exists, but only in limited cases.</p>
+    <div class="box bars" id="bars"></div>
+  </section>
+
+  <!-- ============ EXPLORE ============ -->
+  <section id="explore">
+    <p class="kicker">04 · EXPLORE THE DATA</p>
+    <h2>Every law, bill and quote</h2>
+    <p class="lede">Search, filter and sort everything behind this page. Click any row for the full details.</p>
+    <div class="tabs" role="tablist" id="xtabs">
+      <button role="tab" data-t="laws" aria-selected="true">Laws now in effect</button>
+      <button role="tab" data-t="bills" aria-selected="false">Bills (proposed)</button>
+      <button role="tab" data-t="quotes" aria-selected="false">The exact wording</button>
+    </div>
+    <div class="filters">
+      <input id="x-q" type="search" placeholder="Search words, e.g. warrant, drone, lineup…" aria-label="Search">
+      <select id="x-state" aria-label="State"></select>
+      <select id="x-prot" aria-label="Protection"></select>
+      <select id="x-status" aria-label="Status"></select>
+    </div>
+    <div class="count" id="x-count"></div>
+    <div class="box tablewrap"><table id="xtable"></table></div>
+  </section>
+
+  <!-- ============ WORDS ============ -->
+  <section id="words">
+    <p class="kicker">05 · WORDS ON THIS PAGE</p>
+    <h2>Plain-language guide</h2>
+    <dl class="box gloss" id="gloss"></dl>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p><b>Where a state has no rule,</b> the U.S. Constitution's basic limits on searches and arrests still apply. “No protection” on this page means no extra protection from state law.</p>
+    <p id="src"></p>
+    <p>A CDT staff hackathon prototype. Laws marked “still being checked” have open questions about how they should be counted. This page is not legal advice. <a href="simple.html">Simple version of this page</a></p>
+    <p>Made by Michael Endrias (Intern).</p>
+  </div>
+</footer>
+
+<script src="data.js"></script>
+<script>
+/* =================== plain-language content =================== */
+const D = window.FRT_DATA;
+const PROT = {
+  '1': { short: 'Judge must approve', long: 'A judge has to approve the search first (a warrant or court order).' },
+  '2': { short: 'Person charged is told', long: 'Someone charged with a crime has to be told face recognition was used on them.' },
+  '3': { short: 'Serious crimes only', long: 'Police can only use it to investigate serious crimes.' },
+  '4': { short: "A match isn't enough", long: "A face match alone isn't enough to arrest someone. Police need other evidence." },
+  '5': { short: 'Tested for accuracy', long: 'The software has to be tested to show it works accurately.' },
+  '6': { short: 'No live crowd scanning', long: 'Limits on live scanning, or scanning everyone in view instead of one suspect.' },
+  '7': { short: 'Trained staff only', long: 'Only trained staff can run searches.' }
+};
+const LIMIT = {
+  'lineups only': 'it only covers lineups',
+  'drones only': 'it only covers drones',
+  'probable cause, no court': 'police need strong evidence (probable cause), but no judge has to approve',
+  'court order, lower standard': 'a judge must approve, but the bar is lower than for a regular warrant',
+  'fact of use': 'the person is told face recognition was used, but may not get the details',
+  'real-time only': 'it only covers live scanning',
+  'biometric surveillance': 'it only covers scanning surveillance video, not searching photo databases',
+  'via drone law': "it comes from the state's drone rules, which require a warrant in criminal cases, with exceptions",
+  'child exploitation only': 'it only covers child sexual exploitation cases',
+  'body cameras only': 'it would only cover body-camera footage',
+  'adds offenses': 'it would add more crimes to the existing list',
+  'adds an offense': 'it would add a crime to the existing list',
+  'court order, ongoing surveillance only': "it would require a judge's order, but only for ongoing surveillance",
+  'ongoing surveillance only': 'it would only cover ongoing surveillance',
+  'for ongoing, real-time or persistent tracking use only': 'it would only cover ongoing, live or long-term tracking',
+  'alpr images only': 'it would only cover license-plate camera images',
+  'purchased personal data only': 'it would only cover personal data police buy',
+  'limited to students in school districts': 'it would only cover students in schools'
+};
+const plainLimit = l => LIMIT[String(l).toLowerCase()] || l;
+const BILLSTEP = { 'Introduced': 'Introduced, then stalled', 'Hearing held': 'Got a hearing, then stalled', 'Committee vote': 'Voted on in committee, then stalled',
+  'Passed one chamber': 'Passed one half of the legislature', 'Failed': 'Failed', 'Failed floor vote': 'Failed a full vote' };
+
+const WHO = [['local', 'Local police', 'local police'], ['state', 'State police', 'state police'], ['federal', 'Federal agent', 'a federal agent (like the FBI or ICE)']];
+const SRC = [['photo', 'Still photo', 'a still photo'], ['cctv', 'Security camera', 'security-camera footage'], ['drone', 'Drone', 'drone footage'], ['bodycam', 'Body camera', 'body-camera footage']];
+const DB = [['dmv', "Driver's license photos", "everyone's driver's license photos"], ['mug', 'Mugshots', 'mugshots']];
+const CRIME = [['serious', 'Armed robbery', 'an armed robbery'], ['minor', 'Shoplifting', 'a shoplifting case']];
+const IC = k => `icons/${k}.svg`;
+const CRIME_ICON = { serious: 'step-crime', minor: 'step-crime' };
+
+// The 9 steps of the case. rules = which protections are checked here. at = special handling.
+const STEPS = [
+  { key: 'photo',    icon: 'step-photo',    short: 'Photo',    title: 'Police have a photo of someone they can’t identify', rules: [] },
+  { key: 'crime',    icon: 'step-crime',    short: 'Crime',    title: 'Is this crime serious enough?', rules: ['3'] },
+  { key: 'approval', icon: 'step-approval', short: 'Approval', title: 'Do they need a judge’s OK?', rules: ['1'] },
+  { key: 'search',   icon: 'step-search',   short: 'Search',   title: 'They run the search', rules: ['6', '5', '7'] },
+  { key: 'match',    icon: 'step-match',    short: 'Match',    title: 'The software suggests a match', rules: [] },
+  { key: 'lineup',   icon: 'step-lineup',   short: 'Lineup',   title: 'Do they put the person in a lineup?', rules: ['4'], at: 'lineup' },
+  { key: 'arrest',   icon: 'step-arrest',   short: 'Arrest',   title: 'Can they arrest based on the match?', rules: ['4'], at: 'arrest' },
+  { key: 'disclose', icon: 'step-disclose', short: 'Tell',     title: 'Is the person charged told?', rules: ['2'] },
+  { key: 'trial',    icon: 'step-trial',    short: 'Verdict',  title: 'What protected this person?', rules: [] }
+];
+
+const STATUS = {
+  covered:  { icon: 'status-blocked',  label: 'Protected' },
+  stop:     { icon: 'status-blocked',  label: 'Stopped here' },
+  partial:  { icon: 'status-limited',  label: 'Partly protected' },
+  review:   { icon: 'status-limited',  label: 'Still being checked' },
+  would:    { icon: 'status-limited',  label: 'Would be protected' },
+  bypassed: { icon: 'status-bypassed', label: 'Law exists, but goes around this' },
+  gap:      { icon: 'status-open',     label: 'Not protected' },
+  info:     { icon: 'status-open',     label: 'No special rule' }
+};
+
+const PRESETS = [
+  { t: 'The lineup loophole', s: { state: 'Indiana', who: 'local', src: 'photo', db: 'dmv', crime: 'serious' },
+    d: "Indiana says a face match alone can't put someone in a lineup. Watch what happens at the arrest step." },
+  { t: 'Shoplifting in Montana', s: { state: 'Montana', who: 'local', src: 'cctv', db: 'mug', crime: 'minor' },
+    d: 'Montana only allows face recognition for serious crimes. Here the case stops early.' },
+  { t: 'Drone over a crowd', s: { state: 'Illinois', who: 'local', src: 'drone', db: 'dmv', crime: 'serious' },
+    d: 'Illinois limits face recognition on police drones. Then switch the photo to a security camera.' },
+  { t: 'The feds ask the DMV', s: { state: 'Maryland', who: 'federal', src: 'photo', db: 'dmv', crime: 'serious' },
+    d: "Maryland has strong rules for its own police. What happens when a federal agent asks?" },
+  { t: 'A law with no limits', s: { state: 'Kentucky', who: 'local', src: 'photo', db: 'dmv', crime: 'minor' },
+    d: 'Kentucky has a face recognition law. Does it actually hold police back?' },
+  { t: 'No law at all', s: { state: 'Ohio', who: 'local', src: 'cctv', db: 'mug', crime: 'minor' },
+    d: 'Ohio has no law yet. Every step is open, but two bills are still alive.' }
+];
+
+const GLOSS = [
+  ['Face recognition', 'Software that compares a photo of a face to a collection of other photos and suggests who it might be. It can be wrong.'],
+  ['Warrant / court order', "A judge's written permission. Police have to show a judge why they need to search."],
+  ['Probable cause', 'Strong enough evidence to make it reasonable to believe someone committed a crime. Police normally need it to arrest someone.'],
+  ['Lineup', 'When a witness is shown several people (or photos) and asked to pick out the person they saw.'],
+  ['Live crowd scanning', "Running face recognition on video as it happens, or on everyone in view, instead of one suspect's photo."],
+  ["Driver's license photos", 'Photos the state takes for licenses and IDs. Most adults are in this database, not just people who have been arrested.'],
+  ['Mugshots', 'Photos taken when someone is arrested.'],
+  ['Federal agent', 'Someone working for the national government, like the FBI or ICE, rather than for a city, county or state.'],
+  ['Bill', 'A proposed law. "Still alive" means lawmakers can still pass it. Otherwise it died without becoming law.'],
+  ['Still being checked', 'Our research flagged an open question about how this law should be counted, or who it covers.']
+];
+
+/* =================== helpers =================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const img = (k, w = 32, cls = '') => `<img class="px ${cls}" src="${IC(k)}" width="${w}" height="${w}" alt="">`;
+const find = (list, k) => list.find(x => x[0] === k);
+const link = (href, text) => href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ABBR = {Alabama:'AL',Alaska:'AK',Arizona:'AZ',Arkansas:'AR',California:'CA',Colorado:'CO',Connecticut:'CT',Delaware:'DE','District of Columbia':'DC',Florida:'FL',Georgia:'GA',Hawaii:'HI',Idaho:'ID',Illinois:'IL',Indiana:'IN',Iowa:'IA',Kansas:'KS',Kentucky:'KY',Louisiana:'LA',Maine:'ME',Maryland:'MD',Massachusetts:'MA',Michigan:'MI',Minnesota:'MN',Mississippi:'MS',Missouri:'MO',Montana:'MT',Nebraska:'NE',Nevada:'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND',Ohio:'OH',Oklahoma:'OK',Oregon:'OR',Pennsylvania:'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD',Tennessee:'TN',Texas:'TX',Utah:'UT',Vermont:'VT',Virginia:'VA',Washington:'WA','West Virginia':'WV',Wisconsin:'WI',Wyoming:'WY'};
+const POS = {AK:[0,0],ME:[11,0],WI:[6,1],VT:[10,1],NH:[11,1],WA:[1,2],ID:[2,2],MT:[3,2],ND:[4,2],MN:[5,2],IL:[6,2],MI:[7,2],NY:[9,2],MA:[10,2],OR:[1,3],NV:[2,3],WY:[3,3],SD:[4,3],IA:[5,3],IN:[6,3],OH:[7,3],PA:[8,3],NJ:[9,3],CT:[10,3],RI:[11,3],CA:[1,4],UT:[2,4],CO:[3,4],NE:[4,4],MO:[5,4],KY:[6,4],WV:[7,4],VA:[8,4],MD:[9,4],DE:[10,4],AZ:[2,5],NM:[3,5],KS:[4,5],AR:[5,5],TN:[6,5],NC:[7,5],SC:[8,5],DC:[9,5],OK:[4,6],LA:[5,6],MS:[6,6],AL:[7,6],GA:[8,6],HI:[0,7],TX:[4,7],FL:[9,7]};
+
+const groupOf = name => {
+  const law = (D.states.find(s => s.name === name) || {}).law || 'No law';
+  if (law === 'No law') return 'none';
+  return /none of the seven/i.test(law) ? 'zero' : 'rules';
+};
+const counts = { rules: 0, zero: 0, none: 0 };
+D.states.forEach(s => counts[groupOf(s.name)]++);
+
+/* =================== app state (kept in the URL) =================== */
+const S = { state: 'Indiana', who: 'local', src: 'photo', db: 'dmv', crime: 'serious', step: 0, whatif: 'none', model: 'Montana' };
+try {
+  const h = new URLSearchParams(location.hash.slice(1));
+  for (const k of ['state', 'who', 'src', 'db', 'crime']) if (h.get(k)) S[k] = h.get(k);
+  if (!D.states.some(s => s.name === S.state)) S.state = 'Indiana';
+} catch (e) {}
+const saveHash = () => { try { history.replaceState(null, '', '#' + new URLSearchParams({ state: S.state, who: S.who, src: S.src, db: S.db, crime: S.crime })); } catch (e) {} };
+
+/* =================== the legal logic =================== */
+const WHO_FOR = { local: 'local police', state: 'state agencies', any: 'anyone' };
+const SRC_FOR = { drone: 'police drones', bodycam: 'body-camera footage' };
+
+// One law, one protection, one scenario -> how it plays out
+function judge(law, rule, ctx, at) {
+  if (law.source && law.source !== ctx.src) return { kind: 'bypassed', reason: `it only covers ${SRC_FOR[law.source]}` };
+  if (law.db && law.db !== ctx.db) return { kind: 'bypassed', reason: "it only covers searches of driver's license photos" };
+  const whoOk = law.whoFor.includes('any') || law.whoFor.includes(ctx.who);
+  if (!whoOk && ctx.who === 'federal') return { kind: 'review' };
+  if (!whoOk) return { kind: 'bypassed', reason: `it only covers ${law.whoFor.map(w => WHO_FOR[w]).join(' and ')}` };
+  let limit = law.limits[rule] || '';
+  if (law.source && /drone|body/.test(limit)) limit = '';             // scope already matches the photo source
+  if (rule === '4' && limit === 'lineups only') {
+    if (at === 'lineup') return { kind: 'covered' };
+    return { kind: 'bypassed', reason: 'it only covers lineups, and police can arrest someone without holding a lineup' };
+  }
+  if (rule === '4' && at === 'lineup') return null;                     // general rules are shown at the arrest step
+  return limit ? { kind: 'partial', limit } : { kind: 'covered' };
+}
+
+function ruleStatus(state, rule, ctx, at) {
+  const hits = [];
+  for (const law of D.laws.filter(l => l.state === state && l.rules.includes(rule))) {
+    const j = judge(law, rule, ctx, at);
+    if (j) hits.push({ law, ...j });
+  }
+  const order = ['covered', 'partial', 'review', 'bypassed'];
+  for (const k of order) if (hits.some(h => h.kind === k)) return { status: k, hits, top: hits.find(h => h.kind === k) };
+  return { status: at === 'lineup' ? 'info' : 'gap', hits };
+}
+
+const billsFor = (state, rule) => D.bills.filter(b => b.state === state && b.rules.includes(rule))
+  .sort((a, b) => (b.pending - a.pending) || String(b.year).localeCompare(String(a.year)));
+
+// Apply the "what if" choice on top of real law
+function effective(state, rule, ctx, at) {
+  const r = ruleStatus(state, rule, ctx, at);
+  if (r.status === 'covered' || at === 'lineup' || S.whatif === 'none') return r;
+  if (S.whatif === 'bills') {
+    const b = billsFor(state, rule)[0];
+    if (b) return { ...r, status: 'would', bill: b };
+  }
+  if (S.whatif === 'borrow') {
+    const m = ruleStatus(S.model, rule, ctx, at);
+    if (m.status === 'covered') return { ...r, status: 'would', model: S.model, mhits: m.hits };
+  }
+  return r;
+}
+
+const otherLaws = (state, ctx, where) => D.laws.filter(l => l.state === state && !l.rules.length).filter(l => {
+  if (l.source && l.source !== ctx.src) return false;
+  if (l.db && l.db !== ctx.db) return false;
+  if (!(l.whoFor.includes('any') || l.whoFor.includes(ctx.who) || ctx.who === 'federal')) return false;
+  return where === 'search' ? !!l.db : !l.db;
+});
+
+function computeCase(state, ctx) {
+  let stopAt = -1;
+  const steps = STEPS.map((s, i) => {
+    const results = s.rules.map(r => ({ rule: r, ...effective(state, r, ctx, s.at) }));
+    if (stopAt < 0 && s.key === 'crime' && ctx.crime === 'minor' && ['covered', 'would'].includes(results[0].status)) stopAt = i;
+    return { ...s, results };
+  });
+  steps.forEach((s, i) => {
+    const st = s.results.map(r => r.status);
+    s.agg = s.key === 'trial' ? 'none' : stopAt === i ? 'stop' : stopAt >= 0 && i > stopAt ? 'skip'
+      : !st.length ? 'none'
+      : st.every(x => x === 'covered') ? 'covered'
+      : st.every(x => x === 'covered' || x === 'would') ? 'would'
+      : st.some(x => ['covered', 'partial', 'would'].includes(x)) ? 'partial'
+      : st.includes('review') ? 'review'
+      : st.includes('bypassed') ? 'bypassed'
+      : st.includes('info') ? 'info' : 'gap';
+  });
+  return { steps, stopAt };
+}
+
+/* =================== static sections =================== */
+$('prots').innerHTML = Object.entries(PROT).map(([n, p]) => `<div class="prot"><span class="n">${n}</span><div><b>${esc(p.short)}</b><span class="muted small">${esc(p.long)}</span></div></div>`).join('');
+$('legend').innerHTML = ['covered', 'partial', 'bypassed', 'gap', 'review', 'stop'].map(k => {
+  const t = { covered: 'A state law protects people at this step.', partial: 'There is a protection, but only in some situations.',
+    bypassed: 'The state has a law here, but it doesn’t reach this situation.', gap: 'Nothing in state law protects people at this step.',
+    review: 'There may be a protection. Researchers are still checking.', stop: 'The law ends the search here. The case can’t go on this way.' }[k];
+  return `<div>${img(STATUS[k].icon, 32)}<span><b>${STATUS[k].label}.</b> ${t}</span></div>`;
+}).join('');
+$('src').textContent = 'Source: ' + D.source;
+$('gloss').innerHTML = GLOSS.map(([t, d]) => `<div><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('');
+$('n-rules').textContent = counts.rules; $('n-zero').textContent = counts.zero; $('n-none').textContent = counts.none;
+
+// presets
+$('presets').innerHTML = PRESETS.map((p, i) => `<button class="preset" data-i="${i}"><div class="pt">${img('who-' + p.s.who, 24)}${esc(p.t)}</div><div class="pd">${esc(p.d)}</div></button>`).join('');
+$('presets').onclick = e => { const b = e.target.closest('.preset'); if (b) loadPreset(+b.dataset.i, true); };
+function loadPreset(i, scroll) {
+  Object.assign(S, PRESETS[i].s, { whatif: 'none' });
+  document.querySelectorAll('.preset').forEach(p => p.classList.toggle('on', +p.dataset.i === i));
+  syncPickers(); restart();
+  if (scroll) $('question').scrollIntoView({ block: 'start' });
+}
+
+// map tiles
+const tiles = $('tiles');
+D.states.forEach(s => {
+  const ab = ABBR[s.name], p = POS[ab];
+  const b = document.createElement('button');
+  b.className = 'tile g-' + groupOf(s.name); b.textContent = ab; b.title = s.name; b.dataset.state = s.name;
+  b.setAttribute('aria-label', s.name); b.style.gridColumn = p[0] + 1; b.style.gridRow = p[1] + 1;
+  tiles.appendChild(b);
+});
+tiles.onclick = e => { const b = e.target.closest('.tile'); if (b) { S.state = b.dataset.state; clearPreset(); syncPickers(); restart(); } };
+const stateOpts = sel => D.states.map(s => `<option${s.name === sel ? ' selected' : ''}>${esc(s.name)}</option>`).join('');
+$('state-pick').innerHTML = stateOpts(S.state);
+$('state-pick').onchange = e => { S.state = e.target.value; clearPreset(); syncPickers(); restart(); };
+
+function picker(el, list, key, iconOf) {
+  $(el).innerHTML = list.map(([k, t]) => `<button class="chip" data-k="${k}" aria-pressed="false">${img(iconOf(k), 32)}${esc(t)}</button>`).join('');
+  $(el).onclick = e => { const b = e.target.closest('.chip'); if (b) { S[key] = b.dataset.k; clearPreset(); syncPickers(); restart(); } };
+}
+picker('p-who', WHO, 'who', k => 'who-' + k);
+picker('p-src', SRC, 'src', k => 'src-' + k);
+picker('p-db', DB, 'db', k => 'db-' + k);
+picker('p-crime', CRIME, 'crime', k => k === 'serious' ? 'step-crime' : 'step-photo');
+function syncPickers() {
+  for (const [el, key] of [['p-who', 'who'], ['p-src', 'src'], ['p-db', 'db'], ['p-crime', 'crime']])
+    $(el).querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.k === S[key]));
+  tiles.querySelectorAll('.tile').forEach(t => t.classList.toggle('sel', t.dataset.state === S.state));
+  $('state-pick').value = S.state;
+  saveHash();
+}
+function clearPreset() { document.querySelectorAll('.preset').forEach(p => p.classList.remove('on')); }
+
+/* =================== the walkthrough stage =================== */
+let CASE = null, typeTimer = null, autoTimer = null;
+
+function contextText() {
+  const st = S.state, g = groupOf(st);
+  const lawsHere = D.laws.filter(l => l.state === st);
+  let t = '';
+  if (g === 'none') {
+    const alive = D.bills.filter(b => b.state === st && b.pending).length;
+    t = `${st} has no law about police face recognition. ${alive ? `${alive} bill${alive > 1 ? 's are' : ' is'} still alive.` : ''} It's one of ${counts.none} states in this situation.`;
+  } else if (g === 'zero') {
+    t = `${st} does have a law about face recognition: ${lawsHere.map(l => l.does).join(' ')} But it doesn't add any of the 7 protections, so it won't stop police at the steps below.`;
+  } else {
+    t = `${st} has ${lawsHere.length === 1 ? 'one law' : lawsHere.length + ' laws'} on face recognition: ${lawsHere.map(l => l.name).join('; ')}.`;
+  }
+  if (S.who === 'federal') t += ' These state laws are written for state and local police. Whether they also apply to federal agents hasn’t been settled, so we mark those steps “still being checked.”';
+  return t;
+}
+
+function restart() {
+  stopAuto();
+  CASE = computeCase(S.state, S);
+  const w = find(WHO, S.who), so = find(SRC, S.src), d = find(DB, S.db), c = find(CRIME, S.crime);
+  $('question').innerHTML = `In <span class="hl">${esc(S.state)}</span>, ${esc(w[2])} ${S.who === 'federal' ? 'has' : 'have'} <span class="hl">${esc(so[2])}</span> from <span class="hl">${esc(c[2])}</span>. They want to search it against <span class="hl">${esc(d[2])}</span>. What stops them?`;
+  $('context').textContent = contextText();
+  buildTrack();
+  go(0, false);
+  renderCompare();
+}
+
+function buildTrack() {
+  const n = STEPS.length, x = i => 3 + (94 * (i + 0.5)) / n;
+  $('track').innerHTML = `<div class="road"></div><div class="done" id="done"></div>` +
+    STEPS.map((s, i) => `<button class="station" data-i="${i}" style="left:${x(i)}%" aria-label="Step ${i + 1}: ${esc(s.short)}">
+      ${img(s.icon, 32)}<span class="st"></span><span class="lbl">${esc(s.short)}</span></button>`).join('') +
+    `<div class="avatar" id="avatar" style="left:${x(0)}%">${img('who-' + S.who, 48)}${img('src-' + S.src, 26, 'small')}</div>`;
+  $('track').onclick = e => { const b = e.target.closest('.station'); if (b) { stopAuto(); go(+b.dataset.i, true); } };
+}
+
+function stepX(i) { return 3 + (94 * (i + 0.5)) / STEPS.length; }
+
+function narration(i) {
+  const s = CASE.steps[i], w = find(WHO, S.who), st = S.state;
+  const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+  switch (s.key) {
+    case 'photo': return `${cap(w[2])} ${S.who === 'federal' ? 'has' : 'have'} ${find(SRC, S.src)[2]} of someone they can’t identify. The crime: ${find(CRIME, S.crime)[1].toLowerCase()}.`;
+    case 'crime': return `Before searching, does ${st} limit face recognition to serious crimes?`;
+    case 'approval': return `Do they need a judge to approve the search first?`;
+    case 'search': return `They upload the face and search it against ${find(DB, S.db)[2]}. Are there any rules on how this search is done?`;
+    case 'match': return `The software suggests who it might be. Face matches can be wrong, so what happens next matters.`;
+    case 'lineup': return `Police might show the suspect to a witness in a lineup. Does ${st} have a rule about lineups?`;
+    case 'arrest': return `Can police arrest the person based on the face match?`;
+    case 'disclose': return `If the person is charged with a crime, do they have to be told face recognition was used?`;
+    case 'trial': return CASE.stopAt >= 0 ? `The search was stopped at step ${CASE.stopAt + 1}. Here's the full picture.` : `The case made it all the way through. Here's what protected this person, and what didn't.`;
+  }
+}
+
+function typeOut(el, text) {
+  clearInterval(typeTimer); el.classList.remove('done');
+  if (reduced) { el.textContent = text; el.classList.add('done'); return; }
+  let n = 0; el.textContent = '';
+  typeTimer = setInterval(() => { n += 2; el.textContent = text.slice(0, n); if (n >= text.length) { clearInterval(typeTimer); el.classList.add('done'); } }, 16);
+}
+
+function resultSentence(st, r, step) {
+  const c = r.top, crimeMinor = S.crime === 'minor';
+  if (r.status === 'covered' || (r.status === 'would' && !r.bill && !r.model)) {
+    switch (r.rule) {
+      case '3': return crimeMinor ? `Stopped. ${st} only allows face recognition for serious crimes, and shoplifting isn’t one.` : `Allowed, because this is a serious crime. ${st} only allows face recognition for serious crimes.`;
+      case '1': return `Police must get a judge's approval before they search.`;
+      case '6': return `Live scanning and scanning everyone in view are limited.`;
+      case '5': return `The software has to be tested to show it works accurately.`;
+      case '7': return `Only trained staff can run the search.`;
+      case '4': return step.at === 'lineup' ? `Police can't put someone in a lineup based only on the match. They need other evidence first.` : `A match alone isn't enough. Police need other evidence before they arrest.`;
+      case '2': return `The person charged must be told face recognition was used.`;
+    }
+  }
+  if (r.status === 'partial') return `Partly. ${st} has this protection, with a catch: ${plainLimit(c.limit)}.`;
+  if (r.status === 'review') return `${st} has this protection, but its law is written for “${c.law.who.toLowerCase()}.” Whether it also covers federal agents hasn't been settled.`;
+  if (r.status === 'bypassed') return `${st} has a law here (${c.law.name}), but ${c.reason}. So it doesn't protect this person.`;
+  if (r.status === 'would' && r.bill) return `Not protected today. ${r.bill.name} would add this${r.bill.limits[r.rule] ? `, but ${plainLimit(r.bill.limits[r.rule])}` : ''}. ${r.bill.pending ? 'That bill is still alive.' : 'That bill did not pass.'}`;
+  if (r.status === 'would' && r.model) return `Not protected today. If ${st} had ${r.model}'s law, this step would be protected${r.rule === '3' && crimeMinor ? ', and the search would stop here' : ''}.`;
+  if (r.status === 'info') return `${st} has no special rule about lineups.`;
+  return `Nothing in ${st} law protects people at this step. Only the U.S. Constitution's basic limits apply.`;
+}
+
+function lawCard(law, rule) {
+  const qs = rule ? D.quotes.filter(q => q.state === law.state && q.item === law.name && q.rule === rule) : [];
+  return `<div class="law"><div class="ln">${link(law.link, law.name)} <span class="muted small">(${esc(law.year)})</span>${law.review ? '<span class="tag check">still being checked</span>' : ''}</div>
+    <div>${esc(law.does)}</div><div class="muted small">Who it covers: ${esc(law.who)}</div>
+    ${qs.map(q => `<blockquote>“${esc(q.text.replace(/^"|"$/g, ''))}”<cite>${esc(q.cite)}</cite></blockquote>`).join('')}</div>`;
+}
+function billCard(b) {
+  return `<div class="bill"><span class="bn">${link(b.link, b.name)}</span> <span class="muted small">${esc(b.state)}</span>${b.pending ? '<span class="tag alive">still alive</span>' : `<span class="tag">${esc(BILLSTEP[b.step] || b.step)}</span>`}<br>${esc(b.does)}</div>`;
+}
+function fixes(st, rule) {
+  const here = billsFor(st, rule);
+  const away = D.bills.filter(b => b.state !== st && b.rules.includes(rule)).sort((a, b) => (b.pending - a.pending) || String(b.year).localeCompare(String(a.year))).slice(0, 3);
+  const have = [...new Set(D.laws.filter(l => l.rules.includes(rule) && !l.limits[rule] && !l.source && !l.db).map(l => l.state))];
+  return `<div class="sub">${esc(st)} bills that would add this</div>${here.length ? here.map(billCard).join('') : `<div class="muted small">None so far.</div>`}
+    ${away.length ? `<div class="sub">Bills from other states</div>${away.map(billCard).join('')}` : ''}
+    ${have.length ? `<div class="sub">States that already have it</div><div class="small">${have.map(esc).join(', ')}</div>` : ''}`;
+}
+
+function resultCard(st, r, step) {
+  const kind = step.agg === 'stop' && r.rule === '3' ? 'stop' : r.status;
+  const meta = STATUS[kind];
+  const body = r.hits.map(h => lawCard(h.law, r.rule)).join('') + (r.mhits ? r.mhits.map(h => lawCard(h.law, r.rule)).join('') : '') +
+    (['covered', 'info'].includes(r.status) ? '' : fixes(st, r.rule));
+  return `<div class="result ${kind}">${img(meta.icon, 40, 'si')}<div>
+    <div class="rh"><span class="pill ${kind}">${meta.label}</span>${esc(PROT[r.rule].short)}</div>
+    <p class="verdict">${esc(resultSentence(st, r, step))}</p>
+    ${body ? `<details><summary>${r.status === 'gap' ? 'How could this be fixed?' : 'See the law and the fixes'}</summary><div class="dbody">${body}</div></details>` : ''}
+  </div></div>`;
+}
+function otherCard(law) {
+  return `<div class="result partial">${img('status-limited', 40, 'si')}<div>
+    <div class="rh"><span class="pill partial">Other ${esc(law.state)} law</span>${esc(law.name)}</div>
+    <p class="verdict">${esc(law.does)}</p>
+    <details><summary>Details</summary><div class="dbody">${lawCard(law)}<div class="muted small">This law isn't one of the 7 protections, but it matters here.</div></div></details></div></div>`;
+}
+
+function verdictHTML() {
+  const st = S.state, all = CASE.steps.flatMap(s => s.agg === 'skip' ? [] : s.results.filter(r => r.status !== 'info'));
+  const n = k => all.filter(r => r.status === k).length;
+  const gaps = CASE.steps.flatMap(s => s.agg === 'skip' ? [] : s.results.filter(r => ['gap', 'bypassed', 'partial', 'review'].includes(r.status)).map(r => ({ r, s })));
+  const head = CASE.stopAt >= 0 ? `<p><b>The search was stopped</b> at step ${CASE.stopAt + 1} (${esc(STEPS[CASE.stopAt].short)}).</p>` :
+    `<p><b>Nothing in ${esc(st)} law stopped this search.</b> ${n('covered') ? `It had to pass ${n('covered')} checkpoint${n('covered') > 1 ? 's' : ''} along the way.` : 'Not a single state protection applied.'}</p>`;
+  const models = D.states.filter(s => groupOf(s.name) === 'rules' && s.name !== st).map(s => s.name);
+  return `${head}
+    <div class="vgrid">
+      <div class="vstat"><div class="num">${n('covered') + n('would')}</div><div class="vl">${S.whatif === 'none' ? 'protections applied' : 'protections (with your what-if)'}</div></div>
+      <div class="vstat"><div class="num">${n('partial') + n('review')}</div><div class="vl">only partly, or still being checked</div></div>
+      <div class="vstat"><div class="num">${n('bypassed')}</div><div class="vl">laws that exist but go around this case</div></div>
+      <div class="vstat"><div class="num">${n('gap')}</div><div class="vl">steps with no protection</div></div>
+    </div>
+    ${gaps.length ? `<div class="sub">Where this person wasn't fully protected</div><ul class="small">${gaps.map(({ r, s }) => `<li><b>${esc(s.short)}:</b> ${esc(PROT[r.rule].short)} — ${esc(STATUS[r.status].label.toLowerCase())}</li>`).join('')}</ul>` : ''}
+    <div class="sub" style="margin-top:14px">What if? Try closing the gaps</div>
+    <div class="whatif">
+      <button class="pbtn ghost" data-w="none" aria-pressed="${S.whatif === 'none'}">Today's law</button>
+      <button class="pbtn ghost" data-w="bills" aria-pressed="${S.whatif === 'bills'}">Pass ${esc(st)}'s bills</button>
+      <button class="pbtn ghost" data-w="borrow" aria-pressed="${S.whatif === 'borrow'}">Copy another state's law:</button>
+      <select id="model" aria-label="State to copy">${models.map(m => `<option${m === S.model ? ' selected' : ''}>${esc(m)}</option>`).join('')}</select>
+    </div>
+    <p class="muted small" style="margin-top:8px">${S.whatif === 'bills' ? `Showing what would change if every ${esc(st)} bill on this topic (even ones that died) had passed.` : S.whatif === 'borrow' ? `Showing what would change if ${esc(st)} had ${esc(S.model)}'s law.` : 'Pick an option, then replay the case to see which steps change.'}</p>`;
+}
+
+function go(i, animate) {
+  i = Math.max(0, Math.min(STEPS.length - 1, i));
+  const prev = S.step; S.step = i;
+  const s = CASE.steps[i];
+  const av = $('avatar');
+  av.style.left = stepX(Math.min(i, CASE.stopAt >= 0 ? CASE.stopAt : i)) + '%';
+  if (animate && !reduced && prev !== i) { av.classList.add('moving'); setTimeout(() => av.classList.remove('moving'), 800); }
+  av.classList.remove('stopped');
+  if (CASE.stopAt >= 0 && i >= CASE.stopAt && i !== STEPS.length - 1) { void av.offsetWidth; av.classList.add('stopped'); }
+  $('done').style.width = (stepX(i) - 3) + '%';
+  document.querySelectorAll('.station').forEach((b, j) => {
+    const sj = CASE.steps[j];
+    b.classList.toggle('cur', j === i);
+    b.classList.toggle('seen', j <= i && sj.agg !== 'none' && sj.agg !== 'skip');
+    b.classList.toggle('skipped', sj.agg === 'skip' && j <= i);
+    const tag = b.querySelector('.st');
+    tag.innerHTML = STATUS[sj.agg] ? img(STATUS[sj.agg].icon, 20) : '';
+  });
+  $('sc-icon').innerHTML = img(s.icon, 80);
+  $('sc-no').textContent = `STEP ${i + 1} OF ${STEPS.length}`;
+  $('sc-title').textContent = s.title;
+  typeOut($('sc-narr'), narration(i));
+  let html = '';
+  if (s.agg === 'skip') html = `<div class="result info">${img('status-blocked', 40, 'si')}<div><p class="verdict">This step never happens. The search was stopped at step ${CASE.stopAt + 1}.</p></div></div>`;
+  else {
+    if (s.key === 'photo') html += otherLaws(S.state, S, 'photo').map(otherCard).join('');
+    if (s.key === 'search') html += otherLaws(S.state, S, 'search').map(otherCard).join('');
+    html += s.results.map(r => resultCard(S.state, r, s)).join('');
+    if (s.key === 'match') html += `<div class="result info">${img('status-open', 40, 'si')}<div><p class="verdict">No state tracked here sets a rule for this moment itself. What matters is what police do with the match next.</p></div></div>`;
+    if (s.key === 'trial') html += verdictHTML();
+  }
+  const delay = reduced || !animate ? 0 : 450;
+  $('sc-results').innerHTML = '';
+  setTimeout(() => {
+    if (S.step !== i) return;
+    $('sc-results').innerHTML = html;
+    const wi = $('sc-results').querySelector('.whatif');
+    if (wi) {
+      wi.onclick = e => { const b = e.target.closest('[data-w]'); if (b) { S.whatif = b.dataset.w; CASE = computeCase(S.state, S); buildTrack(); go(STEPS.length - 1, false); } };
+      $('model').onchange = e => { S.model = e.target.value; if (S.whatif === 'borrow') { CASE = computeCase(S.state, S); buildTrack(); go(STEPS.length - 1, false); } };
+      wi.querySelectorAll('[data-w]').forEach(b => { if (b.getAttribute('aria-pressed') === 'true') { b.style.background = 'var(--light)'; } });
+    }
+  }, delay);
+  $('back').disabled = i === 0;
+  $('next').textContent = i === STEPS.length - 1 ? 'Done ✓' : (CASE.stopAt >= 0 && i >= CASE.stopAt ? 'Skip to the verdict ▸' : 'Next step ▸');
+  $('next').disabled = i === STEPS.length - 1;
+}
+const nextStep = () => { const i = S.step; go(CASE.stopAt >= 0 && i >= CASE.stopAt ? STEPS.length - 1 : i + 1, true); };
+$('next').onclick = () => { stopAuto(); nextStep(); };
+$('back').onclick = () => { stopAuto(); go(S.step - 1, true); };
+$('restart').onclick = () => { stopAuto(); go(0, true); };
+function stopAuto() { clearInterval(autoTimer); autoTimer = null; $('auto').textContent = '▶ Autoplay'; }
+$('auto').onclick = () => {
+  if (autoTimer) return stopAuto();
+  $('auto').textContent = '❚❚ Pause';
+  if (S.step === STEPS.length - 1) go(0, true);
+  autoTimer = setInterval(() => { if (S.step >= STEPS.length - 1) stopAuto(); else nextStep(); }, 3800);
+};
+document.addEventListener('keydown', e => {
+  if (/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  const r = $('case').getBoundingClientRect();
+  if (r.bottom < 0 || r.top > innerHeight) return;
+  if (e.key === 'ArrowRight') { stopAuto(); nextStep(); }
+  if (e.key === 'ArrowLeft') { stopAuto(); go(S.step - 1, true); }
+});
+
+/* =================== guided tour =================== */
+let tourAt = -1;
+function tourShow() {
+  $('coach').classList.add('on');
+  $('coach-n').textContent = `TOUR · STORY ${tourAt + 1} OF ${PRESETS.length} · ${PRESETS[tourAt].t.toUpperCase()}`;
+  $('coach-t').textContent = PRESETS[tourAt].d + ' Press autoplay, or step through with Next.';
+  $('coach-next').textContent = tourAt === PRESETS.length - 1 ? 'Finish tour ✓' : 'Next story ▸';
+  loadPreset(tourAt, false);
+  $('coach').scrollIntoView({ block: 'start' });
+  $('auto').click();
+}
+$('start-tour').onclick = () => { tourAt = 0; tourShow(); };
+$('coach-next').onclick = () => { if (tourAt >= PRESETS.length - 1) return endTour(); tourAt++; tourShow(); };
+$('coach-end').onclick = endTour;
+function endTour() { tourAt = -1; $('coach').classList.remove('on'); stopAuto(); }
+
+/* =================== compare =================== */
+const COLS = STEPS.flatMap(s => s.rules.filter(() => s.at !== 'lineup').map(r => ({ r, s })));
+let cmpA = null, cmpB = 'Montana';
+$('cmp-a').onchange = e => { cmpA = e.target.value; renderCompare(); };
+$('cmp-b').onchange = e => { cmpB = e.target.value; renderCompare(); };
+const cell = st => `<td class="ic">${img(STATUS[st].icon, 22)}</td>`;
+
+function renderCompare() {
+  const A = cmpA || S.state, B = cmpB === A ? (A === 'Montana' ? 'Maryland' : 'Montana') : cmpB;
+  $('cmp-a').innerHTML = stateOpts(A); $('cmp-b').innerHTML = stateOpts(B);
+  const ca = computeCase(A, S), cb = computeCase(B, S);
+  let h = `<thead><tr><th>Step</th><th>Protection</th><th>${esc(A)}</th><th>${esc(B)}</th></tr></thead><tbody>`;
+  STEPS.forEach((s, i) => s.rules.forEach((r, k) => {
+    const ra = ca.steps[i], rb = cb.steps[i];
+    const sa = ra.agg === 'skip' ? 'skip' : ra.agg === 'stop' ? 'stop' : ra.results[k].status;
+    const sb = rb.agg === 'skip' ? 'skip' : rb.agg === 'stop' ? 'stop' : rb.results[k].status;
+    const c = x => x === 'skip' ? '<td class="muted small">never reached</td>' : `<td>${img(STATUS[x].icon, 22)} <span class="small">${esc(STATUS[x].label)}</span></td>`;
+    h += `<tr><td>${img(s.icon, 22)} ${esc(s.short)}</td><td>${esc(PROT[r].short)}</td>${c(sa)}${c(sb)}</tr>`;
+  }));
+  const v = c => c.stopAt >= 0 ? `Stopped at step ${c.stopAt + 1}` : 'Search goes through';
+  h += `<tr><td colspan="2"><b>Result</b></td><td><b>${v(ca)}</b></td><td><b>${v(cb)}</b></td></tr></tbody>`;
+  $('h2h').innerHTML = h;
+
+  // every state
+  $('all-note').innerHTML = `For ${esc(find(WHO, S.who)[2])} using ${esc(find(SRC, S.src)[2])} against ${esc(find(DB, S.db)[2])}. Click a state name to walk through it.`;
+  let m = `<thead><tr><th>State</th>${COLS.map(c => `<th title="${esc(PROT[c.r].long)}">${esc(PROT[c.r].short)}</th>`).join('')}</tr></thead><tbody>`;
+  const ncol = COLS.length + 1;
+  const row = name => `<tr><td><button class="linkbtn" data-state="${esc(name)}">${esc(name)}</button></td>` +
+    COLS.map(c => cell(ruleStatus(name, c.r, S, c.s.at).status)).join('') + '</tr>';
+  const names = g => D.states.filter(s => groupOf(s.name) === g).map(s => s.name);
+  m += `<tr class="grp"><td colspan="${ncol}">Have protections (${counts.rules})</td></tr>` + names('rules').map(row).join('');
+  m += `<tr class="grp"><td colspan="${ncol}">Have a law, but it adds none of these protections (${counts.zero})</td></tr>` + names('zero').map(row).join('');
+  m += `<tr class="grp"><td colspan="${ncol}">No law on police face recognition (${counts.none})</td></tr>
+    <tr><td colspan="${ncol}" class="nolaw"><span class="small muted">Not protected at any step in these states. Click one to see its bills: </span>${names('none').map(n => `<button data-state="${esc(n)}" title="${esc(n)}">${ABBR[n]}</button>`).join('')}</td></tr></tbody>`;
+  $('matrix').innerHTML = m;
+}
+$('matrix').onclick = e => { const b = e.target.closest('[data-state]'); if (b) { S.state = b.dataset.state; clearPreset(); syncPickers(); restart(); $('question').scrollIntoView({ block: 'start' }); } };
+
+// national bars
+function renderBars() {
+  const total = D.states.length;
+  $('bars').innerHTML = Object.entries(PROT).map(([r, p]) => {
+    const full = new Set(), part = new Set();
+    D.laws.filter(l => l.rules.includes(r)).forEach(l => (l.limits[r] || l.source || l.db ? part : full).add(l.state));
+    full.forEach(s => part.delete(s));
+    const bills = D.bills.filter(b => b.rules.includes(r)), alive = bills.filter(b => b.pending).length;
+    return `<div class="bar"><div><b>${esc(p.short)}</b><div class="cnt">${full.size} full · ${part.size} partial · ${bills.length} bills (${alive} still alive)</div></div>
+      <div class="track2" title="${full.size} states fully, ${part.size} partly"><div class="f" data-w="${(full.size / total) * 100}"></div><div class="p" data-w="${(part.size / total) * 100}"></div></div></div>`;
+  }).join('');
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.querySelectorAll('[data-w]').forEach(b => b.style.width = b.dataset.w + '%'); io.disconnect(); } }), { threshold: .3 });
+  io.observe($('bars'));
+}
+
+/* =================== data explorer =================== */
+let XT = 'laws', XS = { key: 'state', dir: 1 }, XOPEN = null;
+const protChips = (rules, limits = {}) => `<div class="pchips">${rules.map(r => `<span class="pchip${limits[r] ? ' lim' : ''}" title="${esc(PROT[r].long)}${limits[r] ? ' — ' + plainLimit(limits[r]) : ''}">${esc(PROT[r].short)}</span>`).join('') || '<span class="muted small">None of the 7</span>'}</div>`;
+const XDEF = {
+  laws: {
+    rows: () => D.laws,
+    cols: [['state', 'State'], ['name', 'Law'], ['year', 'Year'], ['does', 'What it does'], ['rules', 'Protections']],
+    cell: (r, k) => k === 'rules' ? protChips(r.rules, r.limits) : k === 'does' ? esc(r.does.length > 140 ? r.does.slice(0, 140) + '…' : r.does) : k === 'name' ? `<b>${esc(r.name)}</b>${r.review ? '<span class="tag check">still being checked</span>' : ''}` : esc(r[k]),
+    more: r => `${lawCard(r)}${r.rules.map(x => D.quotes.filter(q => q.state === r.state && q.item === r.name && q.rule === x).map(q => `<blockquote><b>${esc(PROT[x].short)}:</b> “${esc(q.text.replace(/^"|"$/g, ''))}”<cite>${esc(q.cite)}</cite></blockquote>`).join('')).join('')}
+      <div class="small"><b>Citation:</b> ${esc(r.cite)}</div>${Object.keys(r.limits).length ? `<div class="small"><b>Limits:</b> ${Object.entries(r.limits).map(([k, v]) => esc(PROT[k].short + ': ' + plainLimit(v))).join('; ')}</div>` : ''}`,
+    status: [['', 'Any status'], ['check', 'Still being checked'], ['clear', 'Settled']],
+    statusOk: (r, s) => !s || (s === 'check' ? r.review : !r.review)
+  },
+  bills: {
+    rows: () => D.bills,
+    cols: [['state', 'State'], ['name', 'Bill'], ['year', 'Year'], ['step', 'What happened'], ['does', 'What it would do'], ['rules', 'Protections']],
+    cell: (r, k) => k === 'rules' ? protChips(r.rules, r.limits) : k === 'step' ? (r.pending ? '<span class="tag alive">still alive</span>' : esc(BILLSTEP[r.step] || r.step)) : k === 'does' ? esc(r.does.length > 140 ? r.does.slice(0, 140) + '…' : r.does) : k === 'name' ? `<b>${esc(r.name)}</b>` : esc(r[k]),
+    more: r => `${billCard(r)}<div class="small"><b>Sponsor:</b> ${esc(r.sponsor)}</div>${Object.keys(r.limits).length ? `<div class="small"><b>Limits:</b> ${Object.entries(r.limits).map(([k, v]) => esc(PROT[k].short + ': ' + plainLimit(v))).join('; ')}</div>` : ''}
+      ${D.quotes.filter(q => q.state === r.state && q.item === r.name).map(q => `<blockquote><b>${esc(PROT[q.rule].short)}:</b> “${esc(q.text.replace(/^"|"$/g, ''))}”<cite>${esc(q.cite)}</cite></blockquote>`).join('')}`,
+    status: [['', 'Any status'], ['alive', 'Still alive'], ['dead', 'Did not pass']],
+    statusOk: (r, s) => !s || (s === 'alive' ? r.pending : !r.pending)
+  },
+  quotes: {
+    rows: () => D.quotes,
+    cols: [['state', 'State'], ['item', 'Law or bill'], ['rule', 'Protection'], ['text', 'Exact wording']],
+    cell: (r, k) => k === 'rule' ? `<span class="pchip">${esc(PROT[r.rule].short)}</span>` : k === 'text' ? esc(r.text.length > 180 ? r.text.slice(0, 180) + '…' : r.text) : k === 'item' ? `<b>${esc(r.item)}</b> <span class="tag">${r.kind === 'Law' ? 'law' : 'bill'}</span>` : esc(r[k]),
+    more: r => `<blockquote>${esc(r.text)}<cite>${esc(r.cite)}</cite></blockquote>`,
+    status: [['', 'Laws and bills'], ['law', 'Laws only'], ['bill', 'Bills only']],
+    statusOk: (r, s) => !s || (s === 'law' ? r.kind === 'Law' : r.kind !== 'Law')
+  }
+};
+$('x-state').innerHTML = `<option value="">All states</option>` + D.states.map(s => `<option>${esc(s.name)}</option>`).join('');
+$('x-prot').innerHTML = `<option value="">Any protection</option>` + Object.entries(PROT).map(([k, p]) => `<option value="${k}">${esc(p.short)}</option>`).join('');
+function renderX() {
+  const def = XDEF[XT], q = $('x-q').value.trim().toLowerCase(), st = $('x-state').value, pr = $('x-prot').value, ss = $('x-status').value;
+  let rows = def.rows().filter(r => (!st || r.state === st) && (!pr || (r.rules ? r.rules.includes(pr) : r.rule === pr)) && def.statusOk(r, ss) &&
+    (!q || JSON.stringify(r).toLowerCase().includes(q)));
+  rows = rows.slice().sort((a, b) => {
+    const va = Array.isArray(a[XS.key]) ? a[XS.key].length : a[XS.key], vb = Array.isArray(b[XS.key]) ? b[XS.key].length : b[XS.key];
+    return String(va).localeCompare(String(vb), undefined, { numeric: true }) * XS.dir;
+  });
+  $('x-count').textContent = `${rows.length} ${XT === 'quotes' ? 'quotes' : XT} shown`;
+  let h = `<thead><tr>${def.cols.map(([k, t]) => `<th data-sort="${k}">${esc(t)}${XS.key === k ? (XS.dir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead><tbody>`;
+  rows.forEach((r, i) => {
+    const id = XT + i + r.state + (r.name || r.item);
+    h += `<tr class="row" data-id="${esc(id)}">${def.cols.map(([k]) => `<td>${def.cell(r, k)}</td>`).join('')}</tr>`;
+    if (XOPEN === id) h += `<tr class="more"><td colspan="${def.cols.length}"><div class="dbody">${def.more(r)}<div><button class="pbtn ghost" data-walk="${esc(r.state)}">Walk through ${esc(r.state)} ▸</button></div></div></td></tr>`;
+  });
+  if (!rows.length) h += `<tr><td colspan="${def.cols.length}" class="muted">Nothing matches. Try fewer filters.</td></tr>`;
+  $('xtable').innerHTML = h + '</tbody>';
+}
+function setTab(t) {
+  XT = t; XOPEN = null; XS = { key: 'state', dir: 1 };
+  document.querySelectorAll('#xtabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.t === t));
+  $('x-status').innerHTML = XDEF[t].status.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('');
+  renderX();
+}
+$('xtabs').onclick = e => { const b = e.target.closest('button'); if (b) setTab(b.dataset.t); };
+['x-q', 'x-state', 'x-prot', 'x-status'].forEach(id => $(id).addEventListener('input', () => { XOPEN = null; renderX(); }));
+$('xtable').onclick = e => {
+  const w = e.target.closest('[data-walk]');
+  if (w) { S.state = w.dataset.walk; clearPreset(); syncPickers(); restart(); $('question').scrollIntoView({ block: 'start' }); return; }
+  if (e.target.closest('a')) return;
+  const th = e.target.closest('th[data-sort]');
+  if (th) { XS = { key: th.dataset.sort, dir: XS.key === th.dataset.sort ? -XS.dir : 1 }; renderX(); return; }
+  const tr = e.target.closest('tr.row');
+  if (tr) { XOPEN = XOPEN === tr.dataset.id ? null : tr.dataset.id; renderX(); }
+};
+
+/* =================== start =================== */
+syncPickers();
+restart();
+renderBars();
+setTab('laws');
+</script>
+</body>
+</html>

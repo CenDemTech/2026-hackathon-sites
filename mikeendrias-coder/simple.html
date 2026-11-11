@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Face Value — state facial recognition laws, step by step</title>
+<style>
+  :root {
+    --blue: #1f5fae;      /* TODO: swap for CDT's exact brand blue */
+    --navy: #0f2a4f;
+    --ink: #0f1b2d;
+    --muted: #5a6b80;
+    --line: #dde4ee;
+    --tint: #eef4fb;
+    --gap: #9aa7b8;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #fff; color: var(--ink);
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-image: linear-gradient(var(--tint) 1px, transparent 1px), linear-gradient(90deg, var(--tint) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 20px 16px 72px; }
+  .mono { font-family: var(--mono); }
+  img { image-rendering: pixelated; vertical-align: middle; }
+  a { color: var(--blue); }
+
+  /* ---------- header ---------- */
+  .banner {
+    font: 12px/1.4 var(--mono); letter-spacing: .04em; text-transform: uppercase;
+    border: 1px solid var(--blue); color: var(--blue); background: #fff;
+    display: inline-block; padding: 4px 10px; border-radius: 4px; margin-bottom: 20px;
+  }
+  .hero { position: relative; overflow: hidden; padding: 8px 0 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; font: 600 14px var(--mono); letter-spacing: .2em; color: var(--blue); }
+  .brand .logo { font-size: 22px; }
+  h1 { font-size: clamp(28px, 5.4vw, 46px); line-height: 1.08; margin: 12px 0 10px; letter-spacing: -.01em; max-width: 820px; }
+  h1 em { font-style: normal; color: var(--blue); }
+  .lede { color: var(--muted); font-size: 18px; max-width: 700px; margin: 0; }
+  .scan {
+    position: absolute; left: 0; right: 0; height: 2px; top: 0;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    opacity: .5; animation: scan 3.2s ease-in-out 1 forwards;
+  }
+  @keyframes scan { 0% { top: 0; opacity: 0; } 15% { opacity: .55; } 85% { opacity: .55; } 100% { top: 100%; opacity: 0; } }
+
+  h2 { font-size: 13px; font-family: var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 44px 0 12px; font-weight: 600; }
+  h2 b { color: var(--blue); }
+
+  .panel { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+
+  /* ---------- tile map ---------- */
+  .mapwrap { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 20px; align-items: start; }
+  @media (max-width: 760px) { .mapwrap { grid-template-columns: 1fr; } }
+  .tiles { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+  .tile {
+    aspect-ratio: 1; border-radius: 5px; border: 1.5px solid transparent; cursor: pointer;
+    font: 600 11px var(--mono); display: flex; align-items: center; justify-content: center;
+    transition: transform .15s ease, box-shadow .15s ease; padding: 0;
+  }
+  .tile:hover, .tile:focus-visible { transform: translateY(-2px); outline: none; box-shadow: 0 4px 10px rgba(31,95,174,.25); }
+  .tile.g-rules { background: var(--blue); color: #fff; }
+  .tile.g-zero { background: #fff; color: var(--blue); border-color: var(--blue); }
+  .tile.g-none { background: #edf0f4; color: var(--gap); }
+  .tile.sel { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--navy); transform: translateY(-2px); }
+  .legend { display: grid; gap: 10px; font-size: 14px; }
+  .legend div { display: flex; gap: 10px; align-items: flex-start; }
+  .sw { flex: 0 0 18px; height: 18px; border-radius: 4px; margin-top: 2px; }
+  .legend select { width: 100%; font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--line); margin-top: 6px; }
+
+  /* ---------- toggles ---------- */
+  .toggles { display: grid; gap: 14px; }
+  .trow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .trow .lab { font: 600 12px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); width: 120px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    font: inherit; font-size: 14px; padding: 8px 12px; border-radius: 999px;
+    border: 1.5px solid var(--line); background: #fff; color: var(--ink);
+    transition: border-color .15s, background .15s, transform .15s;
+  }
+  .chip .ico { font-size: 20px; line-height: 1; display: inline-block; transition: transform .25s; }
+  .chip:hover { border-color: var(--blue); }
+  .chip[aria-pressed="true"] { border-color: var(--blue); background: var(--tint); color: var(--navy); font-weight: 600; }
+  .chip[aria-pressed="true"] .ico { animation: bob 1.6s ease-in-out infinite; }
+  @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+  .question {
+    margin: 20px 0 0; font-size: clamp(19px, 3vw, 24px); line-height: 1.35; font-weight: 600;
+    border-left: 4px solid var(--blue); padding: 4px 0 4px 14px;
+  }
+  .question .hl { color: var(--blue); }
+  .groupnote { margin: 12px 0 0; color: var(--muted); font-size: 15px; }
+
+  /* ---------- walkthrough ---------- */
+  .walkhead { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-top: 18px; }
+  .tally { display: flex; flex-wrap: wrap; gap: 6px; font: 12px var(--mono); }
+  .tally span { padding: 3px 8px; border-radius: 4px; }
+  .btn { font: 600 13px var(--mono); padding: 7px 12px; border-radius: 6px; border: 1.5px solid var(--blue); color: var(--blue); background: #fff; cursor: pointer; }
+  .btn:hover { background: var(--tint); }
+
+  .flow { list-style: none; margin: 16px 0 0; padding: 0; position: relative; }
+  .flow::before { content: ""; position: absolute; left: 23px; top: 24px; bottom: 24px; width: 2px; background: var(--line); }
+  .flow .fill { position: absolute; left: 23px; top: 24px; width: 2px; height: 0; background: var(--blue); transition: height .5s ease; }
+  .step { position: relative; padding: 0 0 18px 64px; opacity: .25; transform: translateY(6px); transition: opacity .45s ease, transform .45s ease; }
+  .step.in { opacity: 1; transform: none; }
+  .marker {
+    position: absolute; left: 0; top: 0; width: 48px; height: 48px; border-radius: 12px;
+    background: #fff; border: 2px solid var(--line); display: flex; align-items: center; justify-content: center; font-size: 22px;
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .step.in .marker { border-color: var(--blue); box-shadow: 0 0 0 4px var(--tint); }
+  .stitle { font-weight: 700; font-size: 17px; margin: 10px 0 8px; }
+  .snum { font: 600 12px var(--mono); color: var(--blue); letter-spacing: .1em; display: block; }
+
+  .rule { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; position: relative; overflow: hidden; }
+  .rule .top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .rname { font-weight: 600; }
+  .status { font: 600 11px var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 4px 8px; border-radius: 4px; white-space: nowrap; }
+  .s-covered { background: var(--blue); color: #fff; }
+  .s-partial { background: var(--tint); color: var(--navy); border: 1.5px solid var(--blue); }
+  .s-gap { background: #fff; color: var(--gap); border: 1.5px dashed var(--gap); }
+  .s-review { background: #fff; color: #8a5a00; border: 1.5px solid #e0b252; }
+  .s-other { background: #fff; color: var(--navy); border: 1.5px solid var(--navy); }
+  .rule.r-gap { border-style: dashed; background: #fbfcfd; }
+  .rule.r-covered::after {   /* gate closing animation */
+    content: ""; position: absolute; top: 0; bottom: 0; right: 0; width: 6px; background: var(--blue);
+    transform: scaleY(0); transform-origin: top; transition: transform .5s ease .15s;
+  }
+  .rule.r-partial::after {
+    content: ""; position: absolute; top: 0; height: 50%; right: 0; width: 6px; background: var(--blue);
+    transform: scaleY(0); transform-origin: top; transition: transform .5s ease .15s;
+  }
+  .step.in .rule::after { transform: scaleY(1); }
+  .why { margin: 6px 0 0; font-size: 15px; color: #26364d; }
+  .why .muted { color: var(--muted); }
+  details { margin-top: 8px; }
+  summary { cursor: pointer; font: 600 12px var(--mono); color: var(--blue); letter-spacing: .06em; text-transform: uppercase; }
+  .detail { margin-top: 8px; display: grid; gap: 10px; font-size: 14px; }
+  .lawcard { border-left: 3px solid var(--blue); padding: 2px 0 2px 12px; }
+  .lawcard .ln { font-weight: 700; }
+  blockquote { margin: 6px 0; padding: 8px 10px; background: var(--tint); border-radius: 6px; font-size: 13.5px; }
+  blockquote cite { display: block; font: 11.5px var(--mono); color: var(--muted); font-style: normal; margin-top: 4px; }
+  .bills { display: grid; gap: 6px; }
+  .bill { font-size: 13.5px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; }
+  .bill b { font-family: var(--mono); font-size: 12.5px; }
+  .tag { font: 600 10.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px; border-radius: 3px; background: var(--tint); color: var(--navy); margin-left: 4px; }
+  .tag.rev { background: #fff4dc; color: #8a5a00; }
+  .sub { font: 600 11.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .note { font-size: 14px; color: var(--muted); }
+
+  /* ---------- compare matrix ---------- */
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: separate; border-spacing: 3px; width: 100%; min-width: 640px; font-size: 13px; }
+  th { font: 600 11px var(--mono); letter-spacing: .04em; color: var(--muted); text-align: center; vertical-align: bottom; padding: 4px; }
+  th.grp { color: var(--blue); border-bottom: 2px solid var(--blue); }
+  td.sn { white-space: nowrap; padding-right: 10px; }
+  td.sn button { font: inherit; background: none; border: 0; padding: 2px 0; cursor: pointer; color: var(--ink); text-align: left; }
+  td.sn button:hover { color: var(--blue); text-decoration: underline; }
+  td.c { height: 22px; border-radius: 4px; }
+  td.c.covered { background: var(--blue); }
+  td.c.partial { background: repeating-linear-gradient(135deg, var(--blue) 0 4px, var(--tint) 4px 8px); }
+  td.c.review { background: #fff4dc; border: 1.5px solid #e0b252; }
+  td.c.gap { background: #fff; border: 1.5px dashed #c9d2de; }
+  tr.ghead td { font: 600 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-top: 12px; }
+  .nolaw { font-size: 13.5px; color: var(--muted); }
+  .nolaw button { font: inherit; border: 0; background: none; color: var(--blue); cursor: pointer; padding: 0 2px; }
+
+  footer { margin-top: 56px; border-top: 1px solid var(--line); padding-top: 16px; font-size: 13px; color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="banner">Prototype · not legal analysis</div>
+
+  <header class="hero">
+    <div class="scan" aria-hidden="true"></div>
+    <div class="brand"><span class="logo" data-icon="logo"></span>FACE VALUE</div>
+    <h1>Where do state facial recognition laws <em>actually</em> stop police?</h1>
+    <p class="lede">Pick a state, choose who is searching and with what, and follow one investigation step by step. See where a law steps in, where it only partly applies, and where nothing does.</p>
+    <p><a href="index.html"><b>Try the full interactive version →</b></a></p>
+  </header>
+
+  <h2><b>01</b> · Pick a state</h2>
+  <div class="panel mapwrap">
+    <div class="tiles" id="tiles" role="group" aria-label="States"></div>
+    <div class="legend">
+      <div><span class="sw" style="background:var(--blue)"></span><span><b id="n-rules"></b> have a law that sets at least one of the seven rules</span></div>
+      <div><span class="sw" style="border:1.5px solid var(--blue)"></span><span><b id="n-zero"></b> have a law, but it sets none of the seven</span></div>
+      <div><span class="sw" style="background:#edf0f4"></span><span><b id="n-none"></b> have no facial recognition law</span></div>
+      <label class="sub" for="state-pick">Or choose from a list
+        <select id="state-pick"></select>
+      </label>
+    </div>
+  </div>
+
+  <h2><b>02</b> · Who is searching, and with what</h2>
+  <div class="panel toggles">
+    <div class="trow"><span class="lab">Who</span><span id="t-who" class="trow"></span></div>
+    <div class="trow"><span class="lab">Photo from</span><span id="t-src" class="trow"></span></div>
+    <div class="trow"><span class="lab">Searched against</span><span id="t-db" class="trow"></span></div>
+  </div>
+
+  <p class="question" id="question"></p>
+  <p class="groupnote" id="groupnote"></p>
+
+  <h2><b>03</b> · Follow the case</h2>
+  <div class="walkhead">
+    <div class="tally" id="tally"></div>
+    <div><button class="btn" id="replay">↻ Replay</button> <button class="btn" id="skip">Skip ▸▸</button></div>
+  </div>
+  <ol class="flow" id="flow"></ol>
+
+  <h2><b>04</b> · Compare every state</h2>
+  <p class="note" id="cmpnote"></p>
+  <div class="panel tablewrap"><table id="matrix"></table></div>
+
+  <footer>
+    <p><b>Silent ≠ anything goes.</b> Where state law has no rule, federal constitutional limits (the Fourth Amendment and probable cause) still apply.</p>
+    <p id="source"></p>
+    <p>A CDT staff hackathon prototype. Laws and rows marked “under review” have open questions about how they should be counted. Nothing here is legal advice.</p>
+    <p>Made by Michael Endrias (Intern). <a href="index.html">Full interactive version</a></p>
+  </footer>
+</div>
+
+<script src="data.js"></script>
+<script>
+/* ---------------- configuration ---------------- */
+// Icons: emoji for now. To use a designed icon, set the value to a file path, e.g. 'icons/who-local.svg'.
+const ICONS = Object.fromEntries(['logo', 'who-local', 'who-state', 'who-federal', 'src-photo', 'src-cctv', 'src-drone', 'src-bodycam',
+  'db-dmv', 'db-mug', 'step-photo', 'step-crime', 'step-approval', 'step-search', 'step-match', 'step-trial'].map(k => [k, `icons/${k}.svg`]));
+ICONS['step-match'] = 'icons/step-arrest.svg';
+const WHO = [['local', 'Local police'], ['state', 'State police'], ['federal', 'Federal agent']];
+const SRC = [['photo', 'Still photo'], ['cctv', 'Security camera'], ['drone', 'Drone'], ['bodycam', 'Body camera']];
+const DB  = [['dmv', "Driver's license photos"], ['mug', 'Mugshots']];
+const RULE = {
+  '1': 'Warrant or court approval before a search',
+  '2': 'Defendant must be told facial recognition was used',
+  '3': 'Only for serious crimes',
+  '4': "A match can't be the only basis for an arrest",
+  '5': 'System must meet testing and accuracy standards',
+  '6': 'Limits on real-time or untargeted scans',
+  '7': 'Operators must be trained'
+};
+const STEPS = [
+  { icon: 'step-photo',    title: 'Police have a photo of an unknown suspect', rules: [], place: 'photo' },
+  { icon: 'step-crime',    title: 'Can they search for this crime at all?', rules: ['3'] },
+  { icon: 'step-approval', title: 'Do they need a warrant or a judge first?', rules: ['1'] },
+  { icon: 'step-search',   title: 'They run the search', rules: ['6', '5', '7'], place: 'db' },
+  { icon: 'step-match',    title: 'A match comes back. Can they arrest on that alone?', rules: ['4'] },
+  { icon: 'step-trial',    title: 'Charges and trial. Is the defense told?', rules: ['2'] }
+];
+const ABBR = {Alabama:'AL',Alaska:'AK',Arizona:'AZ',Arkansas:'AR',California:'CA',Colorado:'CO',Connecticut:'CT',Delaware:'DE','District of Columbia':'DC',Florida:'FL',Georgia:'GA',Hawaii:'HI',Idaho:'ID',Illinois:'IL',Indiana:'IN',Iowa:'IA',Kansas:'KS',Kentucky:'KY',Louisiana:'LA',Maine:'ME',Maryland:'MD',Massachusetts:'MA',Michigan:'MI',Minnesota:'MN',Mississippi:'MS',Missouri:'MO',Montana:'MT',Nebraska:'NE',Nevada:'NV','New Hampshire':'NH','New Jersey':'NJ','New Mexico':'NM','New York':'NY','North Carolina':'NC','North Dakota':'ND',Ohio:'OH',Oklahoma:'OK',Oregon:'OR',Pennsylvania:'PA','Rhode Island':'RI','South Carolina':'SC','South Dakota':'SD',Tennessee:'TN',Texas:'TX',Utah:'UT',Vermont:'VT',Virginia:'VA',Washington:'WA','West Virginia':'WV',Wisconsin:'WI',Wyoming:'WY'};
+// Tile-map positions [column, row]
+const POS = {AK:[0,0],ME:[11,0],WI:[6,1],VT:[10,1],NH:[11,1],WA:[1,2],ID:[2,2],MT:[3,2],ND:[4,2],MN:[5,2],IL:[6,2],MI:[7,2],NY:[9,2],MA:[10,2],OR:[1,3],NV:[2,3],WY:[3,3],SD:[4,3],IA:[5,3],IN:[6,3],OH:[7,3],PA:[8,3],NJ:[9,3],CT:[10,3],RI:[11,3],CA:[1,4],UT:[2,4],CO:[3,4],NE:[4,4],MO:[5,4],KY:[6,4],WV:[7,4],VA:[8,4],MD:[9,4],DE:[10,4],AZ:[2,5],NM:[3,5],KS:[4,5],AR:[5,5],TN:[6,5],NC:[7,5],SC:[8,5],DC:[9,5],OK:[4,6],LA:[5,6],MS:[6,6],AL:[7,6],GA:[8,6],HI:[0,7],TX:[4,7],FL:[9,7]};
+
+/* ---------------- helpers ---------------- */
+const D = window.FRT_DATA;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const icon = k => { const v = ICONS[k] || ''; return /\.(svg|png)$/.test(v) ? `<img src="${esc(v)}" alt="" width="22" height="22">` : esc(v); };
+const label = (list, k) => list.find(x => x[0] === k)[1];
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const link = (href, text) => href ? `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(text)}</a>` : esc(text);
+
+const groupOf = name => {
+  const law = (D.states.find(s => s.name === name) || {}).law || 'No law';
+  if (law === 'No law') return 'none';
+  return /none of the seven/i.test(law) ? 'zero' : 'rules';
+};
+const S = { state: 'Indiana', who: 'local', src: 'photo', db: 'dmv' };
+
+// Does a law apply in this scenario? 'yes' | 'review' (federal, unclear) | false
+function applies(law, ctx) {
+  if (law.source && law.source !== ctx.src) return false;
+  if (law.db && law.db !== ctx.db) return false;
+  if (law.whoFor.includes('any') || law.whoFor.includes(ctx.who)) return 'yes';
+  if (ctx.who === 'federal') return 'review';
+  return false;
+}
+
+function ruleStatus(state, rule, ctx) {
+  const hits = [];
+  for (const law of D.laws.filter(l => l.state === state && l.rules.includes(rule))) {
+    const a = applies(law, ctx);
+    if (!a) continue;
+    let limit = law.limits[rule] || '';
+    if (limit && law.source && limit.toLowerCase().includes(law.source === 'drone' ? 'drone' : 'body')) limit = ''; // scope already matches
+    hits.push({ law, mode: a, limit });
+  }
+  const yes = hits.filter(h => h.mode === 'yes');
+  let status = 'gap';
+  if (yes.some(h => !h.limit)) status = 'covered';
+  else if (yes.length) status = 'partial';
+  else if (hits.length) status = 'review';
+  return { status, hits };
+}
+
+const otherLaws = (state, ctx, place) =>
+  D.laws.filter(l => l.state === state && !l.rules.length && applies(l, ctx) &&
+    (place === 'db' ? !!l.db : !l.db));
+
+const quotesFor = (state, item, rule) => D.quotes.filter(q => q.state === state && q.item === item && q.rule === rule);
+const byPendingThenYear = (a, b) => (b.pending - a.pending) || (String(b.year).localeCompare(String(a.year)));
+
+/* ---------------- static UI ---------------- */
+document.querySelectorAll('[data-icon]').forEach(el => el.innerHTML = icon(el.dataset.icon));
+$('source').textContent = 'Source: ' + D.source;
+
+const counts = { rules: 0, zero: 0, none: 0 };
+D.states.forEach(s => counts[groupOf(s.name)]++);
+$('n-rules').textContent = counts.rules; $('n-zero').textContent = counts.zero; $('n-none').textContent = counts.none;
+
+const tiles = $('tiles');
+tiles.style.gridTemplateRows = 'repeat(8, auto)';
+D.states.forEach(s => {
+  const ab = ABBR[s.name], p = POS[ab];
+  const b = document.createElement('button');
+  b.className = 'tile g-' + groupOf(s.name);
+  b.textContent = ab; b.title = s.name; b.dataset.state = s.name;
+  b.style.gridColumn = p[0] + 1; b.style.gridRow = p[1] + 1;
+  b.setAttribute('aria-label', s.name);
+  b.onclick = () => pickState(s.name);
+  tiles.appendChild(b);
+});
+$('state-pick').innerHTML = D.states.map(s => `<option>${esc(s.name)}</option>`).join('');
+$('state-pick').onchange = e => pickState(e.target.value);
+
+function chips(el, list, key, prefix) {
+  $(el).innerHTML = list.map(([k, t]) =>
+    `<button class="chip" data-k="${k}" aria-pressed="${S[key] === k}"><span class="ico">${icon(prefix + k)}</span>${esc(t)}</button>`).join('');
+  $(el).onclick = e => {
+    const b = e.target.closest('.chip'); if (!b) return;
+    S[key] = b.dataset.k;
+    $(el).querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c.dataset.k === S[key]));
+    render(true);
+  };
+}
+chips('t-who', WHO, 'who', 'who-');
+chips('t-src', SRC, 'src', 'src-');
+chips('t-db', DB, 'db', 'db-');
+
+function pickState(name, scroll = true) {
+  S.state = name;
+  $('state-pick').value = name;
+  tiles.querySelectorAll('.tile').forEach(t => t.classList.toggle('sel', t.dataset.state === name));
+  render(true);
+  if (scroll) $('question').scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+}
+
+/* ---------------- walkthrough ---------------- */
+function lawCard(law, rule, limit) {
+  const qs = rule ? quotesFor(law.state, law.name, rule) : [];
+  return `<div class="lawcard">
+    <div class="ln">${link(law.link, law.name)} <span class="mono note">${esc(law.year)}</span>${law.review ? '<span class="tag rev">under review</span>' : ''}</div>
+    <div>${esc(law.does)}</div>
+    <div class="note">Covers: ${esc(law.who)}${limit ? ` · This rule only applies: <b>${esc(limit)}</b>` : ''}</div>
+    ${qs.map(q => `<blockquote>${esc(q.text)}<cite>${esc(q.cite)}</cite></blockquote>`).join('')}
+  </div>`;
+}
+
+function billList(state, rule) {
+  const here = D.bills.filter(b => b.state === state && b.rules.includes(rule)).sort(byPendingThenYear);
+  const away = D.bills.filter(b => b.state !== state && b.rules.includes(rule)).sort(byPendingThenYear).slice(0, 3);
+  const withLaw = [...new Set(D.laws.filter(l => l.rules.includes(rule) && !l.limits[rule] && !l.source && !l.db).map(l => ABBR[l.state]))];
+  const one = b => `<div class="bill"><b>${link(b.link, b.name)}</b>${b.pending ? '<span class="tag">pending</span>' : ''} <span class="note">${esc(b.state)} · ${esc(b.step)}</span><br>${esc(b.does)}</div>`;
+  return `<div class="sub">Bills that would fill this</div>
+    <div class="bills">${here.length ? here.map(one).join('') : `<div class="note">No ${esc(state)} bill has proposed this rule.</div>`}</div>
+    ${away.length ? `<div class="sub">From other states</div><div class="bills">${away.map(one).join('')}</div>` : ''}
+    ${withLaw.length ? `<div class="note">Already law in: ${withLaw.join(', ')}</div>` : ''}`;
+}
+
+function ruleBlock(state, rule, ctx) {
+  const { status, hits } = ruleStatus(state, rule, ctx);
+  const tag = { covered: 'Rule in place', partial: 'Partly covered', gap: 'No rule', review: 'Under review' }[status];
+  let why = '';
+  if (status === 'covered') why = `Yes. ${esc(hits.find(h => h.mode === 'yes' && !h.limit).law.name)} sets this rule.`;
+  if (status === 'partial') {
+    const h = hits.find(x => x.mode === 'yes');
+    why = `Only partly. This rule is limited to: <b>${esc(h.limit)}</b>. Outside that, nothing in state law stops this step.`;
+  }
+  if (status === 'review') why = `${esc(state)} has this rule, but the law covers “${esc(hits[0].law.who)}.” Whether it reaches federal agents is under review.`;
+  if (status === 'gap') why = `No ${esc(state)} rule. <span class="muted">Federal constitutional limits still apply.</span>`;
+  const body = hits.map(h => lawCard(h.law, rule, h.limit)).join('') + (status === 'covered' ? '' : billList(state, rule));
+  return `<div class="rule r-${status}">
+    <div class="top"><span class="status s-${status}">${tag}</span><span class="rname">${esc(RULE[rule])}</span></div>
+    <p class="why">${why}</p>
+    <details><summary>${status === 'covered' ? 'See the law' : status === 'gap' ? 'How this gap could be filled' : 'Details and bills'}</summary><div class="detail">${body}</div></details>
+  </div>`;
+}
+
+function otherBlock(law) {
+  return `<div class="rule r-other">
+    <div class="top"><span class="status s-other">Other limit</span><span class="rname">${esc(law.name)}</span>${law.review ? '<span class="tag rev">under review</span>' : ''}</div>
+    <p class="why">${esc(law.does)}</p>
+    <details><summary>Details</summary><div class="detail">${lawCard(law)}<div class="note">This law sets none of the seven rules tracked here.</div></div></details>
+  </div>`;
+}
+
+let timers = [];
+function render(animate) {
+  timers.forEach(clearTimeout); timers = [];
+  const ctx = S, st = S.state, g = groupOf(st);
+  const WHO_S = { local: 'local police', state: 'state police', federal: 'a federal agent' };
+  const SRC_S = { photo: 'a still photo', cctv: 'security-camera footage', drone: 'drone footage', bodycam: 'body-camera footage' };
+  $('question').innerHTML = `In <span class="hl">${esc(st)}</span>, can <span class="hl">${WHO_S[S.who]}</span> run <span class="hl">${SRC_S[S.src]}</span> against <span class="hl">${esc(label(DB, S.db).toLowerCase())}</span>?`;
+  $('groupnote').innerHTML =
+    g === 'none' ? `${esc(st)} is one of ${counts.none} states with no facial recognition law. The walkthrough is the same for all of them; only the bills differ.` :
+    g === 'zero' ? `${esc(st)} has a facial recognition law on the books, but it sets none of the seven rules tracked here.` :
+    S.who === 'federal' ? `State laws here are written for state and local agencies. Rows marked “under review” need a legal call on whether they reach federal agents.` : '';
+
+  const tally = { covered: 0, partial: 0, review: 0, gap: 0 };
+  let html = '<div class="fill" id="fill"></div>';
+  STEPS.forEach((s, i) => {
+    let inner = '';
+    if (s.place === 'photo') {
+      inner += `<p class="why">Photo from: <b>${icon('src-' + S.src)} ${esc(label(SRC, S.src))}</b></p>`;
+      inner += otherLaws(st, ctx, 'photo').map(otherBlock).join('');
+    }
+    if (s.place === 'db') {
+      inner += `<p class="why">Searched against: <b>${icon('db-' + S.db)} ${esc(label(DB, S.db))}</b></p>`;
+      inner += otherLaws(st, ctx, 'db').map(otherBlock).join('');
+    }
+    s.rules.forEach(r => { tally[ruleStatus(st, r, ctx).status]++; inner += ruleBlock(st, r, ctx); });
+    html += `<li class="step" data-i="${i}"><div class="marker">${icon(s.icon)}</div>
+      <div class="stitle"><span class="snum">STEP ${String(i + 1).padStart(2, '0')}</span>${esc(s.title)}</div>${inner}</li>`;
+  });
+  $('flow').innerHTML = html;
+  $('tally').innerHTML = `<span class="s-covered">${tally.covered} in place</span><span class="s-partial">${tally.partial} partial</span>` +
+    (tally.review ? `<span class="s-review">${tally.review} under review</span>` : '') + `<span class="s-gap">${tally.gap} no rule</span>`;
+  play(animate && !reduced);
+  renderMatrix();
+}
+
+function play(animate) {
+  timers.forEach(clearTimeout); timers = [];
+  const steps = [...$('flow').querySelectorAll('.step')], fill = $('fill'), flow = $('flow');
+  const reveal = i => {
+    steps[i].classList.add('in');
+    const last = steps[i];
+    fill.style.height = Math.max(0, last.offsetTop + 24 - 24) + 'px';
+  };
+  if (!animate) { steps.forEach((_, i) => reveal(i)); fill.style.height = (flow.scrollHeight - 48) + 'px'; return; }
+  steps.forEach(s => s.classList.remove('in')); fill.style.height = '0px';
+  steps.forEach((_, i) => timers.push(setTimeout(() => reveal(i), 250 + i * 650)));
+}
+$('replay').onclick = () => play(!reduced);
+$('skip').onclick = () => play(false);
+
+/* ---------------- compare matrix ---------------- */
+const COLS = STEPS.filter(s => s.rules.length);
+function renderMatrix() {
+  const ctx = S;
+  $('cmpnote').innerHTML = `Every state for <b>${esc(label(WHO, S.who).toLowerCase())}</b> · <b>${esc(label(SRC, S.src).toLowerCase())}</b> · <b>${esc(label(DB, S.db).toLowerCase())}</b>. Solid = rule in place, striped = partly covered, dashed = no rule. Click a state to walk through it.`;
+  let h = '<thead><tr><th></th>' + COLS.map((s, i) => `<th class="grp" colspan="${s.rules.length}">STEP ${String(STEPS.indexOf(s) + 1).padStart(2, '0')}</th>`).join('') + '</tr><tr><th></th>' +
+    COLS.flatMap(s => s.rules.map(r => `<th title="${esc(RULE[r])}">${esc(RULE[r].split(' ').slice(0, 3).join(' '))}…</th>`)).join('') + '</tr></thead><tbody>';
+  const row = name => `<tr><td class="sn"><button data-state="${esc(name)}">${esc(name)}</button></td>` +
+    COLS.flatMap(s => s.rules.map(r => { const st = ruleStatus(name, r, ctx).status; return `<td class="c ${st}" title="${esc(name)}: ${esc(RULE[r])} — ${st}"></td>`; })).join('') + '</tr>';
+  const names = g => D.states.filter(s => groupOf(s.name) === g).map(s => s.name);
+  const ncol = COLS.reduce((n, s) => n + s.rules.length, 0) + 1;
+  h += `<tr class="ghead"><td colspan="${ncol}">Law sets at least one rule (${counts.rules})</td></tr>` + names('rules').map(row).join('');
+  h += `<tr class="ghead"><td colspan="${ncol}">Law on the books, none of the seven rules (${counts.zero})</td></tr>` + names('zero').map(row).join('');
+  h += `<tr class="ghead"><td colspan="${ncol}">No facial recognition law (${counts.none})</td></tr>`;
+  h += `<tr><td colspan="${ncol}" class="nolaw">Every step is a gap in all ${counts.none} states: ` +
+    names('none').map(n => `<button data-state="${esc(n)}">${esc(ABBR[n])}</button>`).join(' ') + '</td></tr></tbody>';
+  $('matrix').innerHTML = h;
+}
+$('matrix').onclick = e => { const b = e.target.closest('[data-state]'); if (b) pickState(b.dataset.state); };
+
+pickState('Indiana', false);
+</script>
+</body>
+</html>
