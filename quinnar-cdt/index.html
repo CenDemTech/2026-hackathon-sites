@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Byte vs. the Data Grabbers</title>
+<meta name="description" content="A data privacy adventure: help Byte the robot cat win four mini-games and take back your data.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="game" id="game">
+
+  <!-- Left panel: Byte the robot cat -->
+  <aside class="side">
+    <div class="bubble" id="bubble" aria-live="polite"></div>
+    <button class="byte bob big" id="byte" type="button" aria-label="Pet Byte">
+      <svg role="img" aria-label="Byte, a cute colorful robot cat" viewBox="0 0 200 230">
+        <path d="M138 176 C186 176 192 130 166 118" fill="none" stroke="#A78BFA" stroke-width="10" stroke-linecap="round"/>
+        <circle cx="165" cy="115" r="8" fill="#FFD54A" stroke="#0E0C2B" stroke-width="3"/>
+        <rect x="58" y="122" width="84" height="72" rx="30" fill="#5EEAD4" stroke="#0E0C2B" stroke-width="4"/>
+        <path d="M100 138 L120 146 L120 160 C120 172 110 179 100 183 C90 179 80 172 80 160 L80 146 Z" fill="#FFD54A" stroke="#0E0C2B" stroke-width="3" stroke-linejoin="round"/>
+        <circle cx="100" cy="157" r="5" fill="#0E0C2B"/>
+        <rect x="98.5" y="160" width="3" height="9" rx="1.5" fill="#0E0C2B"/>
+        <ellipse cx="78" cy="196" rx="16" ry="9" fill="#FF7AB6" stroke="#0E0C2B" stroke-width="4"/>
+        <ellipse cx="122" cy="196" rx="16" ry="9" fill="#FF7AB6" stroke="#0E0C2B" stroke-width="4"/>
+        <circle cx="54" cy="152" r="9" fill="#FF7AB6" stroke="#0E0C2B" stroke-width="4"/>
+        <circle cx="146" cy="152" r="9" fill="#FF7AB6" stroke="#0E0C2B" stroke-width="4"/>
+        <path d="M44 66 L40 22 L82 44 Z" fill="#FF7AB6" stroke="#0E0C2B" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M50 56 L48 33 L69 45 Z" fill="#A78BFA"/>
+        <path d="M156 66 L160 22 L118 44 Z" fill="#FF7AB6" stroke="#0E0C2B" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M150 56 L152 33 L131 45 Z" fill="#A78BFA"/>
+        <line x1="100" y1="40" x2="100" y2="18" stroke="#0E0C2B" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="100" cy="13" r="7" fill="#FFD54A" stroke="#0E0C2B" stroke-width="3"/>
+        <rect x="32" y="40" width="136" height="96" rx="44" fill="#5EEAD4" stroke="#0E0C2B" stroke-width="4"/>
+        <rect x="48" y="60" width="104" height="58" rx="26" fill="#0E0C2B"/>
+        <path d="M30 98 L8 92 M30 108 L6 108 M30 118 L8 124" fill="none" stroke="#A78BFA" stroke-width="4" stroke-linecap="round"/>
+        <path d="M170 98 L192 92 M170 108 L194 108 M170 118 L192 124" fill="none" stroke="#A78BFA" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="62" cy="106" r="6" fill="#FF7AB6" opacity="0.7"/>
+        <circle cx="138" cy="106" r="6" fill="#FF7AB6" opacity="0.7"/>
+        <g id="eyes-normal">
+          <ellipse cx="80" cy="86" rx="9" ry="11" fill="#FFD54A"/>
+          <ellipse cx="120" cy="86" rx="9" ry="11" fill="#FFD54A"/>
+          <circle cx="83" cy="82" r="3" fill="#FFFFFF"/>
+          <circle cx="123" cy="82" r="3" fill="#FFFFFF"/>
+        </g>
+        <g id="eyes-happy" opacity="0">
+          <path d="M70 90 Q80 75 90 90" fill="none" stroke="#FFD54A" stroke-width="5" stroke-linecap="round"/>
+          <path d="M110 90 Q120 75 130 90" fill="none" stroke="#FFD54A" stroke-width="5" stroke-linecap="round"/>
+        </g>
+        <g id="eyes-hurt" opacity="0">
+          <path d="M72 78 L88 86 L72 94" fill="none" stroke="#FF6B5E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M128 78 L112 86 L128 94" fill="none" stroke="#FF6B5E" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <g id="mouth-smile">
+          <path d="M90 102 Q95 109 100 102 Q105 109 110 102" fill="none" stroke="#FF7AB6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <g id="mouth-o" opacity="0">
+          <ellipse cx="100" cy="106" rx="5" ry="6" fill="#FF7AB6"/>
+        </g>
+      </svg>
+    </button>
+    <div class="byte-info">
+      <div>
+        <div class="byte-name">Byte</div>
+        <div class="byte-tag">Robot cat. Privacy defender.</div>
+      </div>
+      <button class="pill" id="sound" type="button" aria-pressed="false">Sound: off</button>
+    </div>
+  </aside>
+
+  <!-- Right panel: the game screens -->
+  <section class="stage" aria-label="Game">
+
+    <div class="hud" id="hud" hidden>
+      <div class="hud-left">
+        <span class="tag" id="hud-tag"></span>
+        <span class="hud-name" id="hud-name"></span>
+      </div>
+      <div class="score" id="hud-score"></div>
+    </div>
+
+    <!-- Title screen -->
+    <div class="screen center" id="s-title">
+      <div class="eyebrow teal">A data privacy adventure</div>
+      <h1 class="title"><button type="button" class="plain" id="title-egg" aria-label="Byte vs. the Data Grabbers. Press for a fun fact.">Byte vs. the <span class="yellow">Data Grabbers</span></button></h1>
+      <p class="lede">Big companies collect far more about your life than they need. Byte is a robot cat with a plan. Help Byte win four adventures and take back your data.</p>
+      <div><button type="button" class="cta big" id="btn-start">Start the adventure</button></div>
+      <p class="fine">All companies and characters are made up. Facts are simplified for play.</p>
+    </div>
+
+    <!-- Level intro -->
+    <div class="screen center" id="s-intro" hidden>
+      <div class="panel" id="intro-panel">
+        <div class="eyebrow" id="intro-tag"></div>
+        <h2 class="h2" id="intro-name"></h2>
+        <div class="field">
+          <div class="label">Villain</div>
+          <div class="villain" id="intro-villain"></div>
+          <div class="taunt" id="intro-taunt"></div>
+        </div>
+        <div class="field">
+          <div class="label">Your mission</div>
+          <div class="goal" id="intro-goal"></div>
+        </div>
+      </div>
+      <div><button type="button" class="cta big" id="btn-launch">Let's go!</button></div>
+    </div>
+
+    <!-- Level 1: zap the trackers -->
+    <div class="screen" id="s-play0" hidden>
+      <div class="meter-row">
+        <div class="meter">
+          <div class="meter-label" id="zap-text"></div>
+          <div class="bar"><div class="bar-fill teal-bg" id="zap-bar"></div></div>
+        </div>
+        <div class="pips-row">
+          <span class="meter-label" id="leak-text"></span>
+          <span class="pips" id="leak-pips"></span>
+        </div>
+      </div>
+      <div class="holes" id="holes"></div>
+    </div>
+
+    <!-- Level 2: dark patterns quiz -->
+    <div class="screen" id="s-play1" hidden>
+      <div class="mock">
+        <div class="mock-bar">
+          <span class="dot" style="background:#FF6B5E"></span>
+          <span class="dot" style="background:#FFD54A"></span>
+          <span class="dot" style="background:#5EEAD4"></span>
+          <span class="mock-url">sly-subscriptions.example</span>
+        </div>
+        <div class="mock-body">
+          <div class="mock-head" id="q-head"></div>
+          <div class="mock-text" id="q-body"></div>
+          <div class="mock-box" id="q-boxrow" hidden>
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18">
+              <rect x="1" y="1" width="16" height="16" rx="4" fill="#5EEAD4" stroke="#14123A" stroke-width="2"/>
+              <path d="M5 9.5 L8 12.5 L13 6" fill="none" stroke="#14123A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span id="q-box"></span>
+          </div>
+          <div class="mock-actions">
+            <div class="mock-primary" id="q-primary"></div>
+            <div class="mock-secondary" id="q-secondary"></div>
+          </div>
+        </div>
+      </div>
+      <div class="prompt" id="q-prompt"></div>
+      <div class="options" id="q-options"></div>
+      <div class="result" id="q-result" hidden>
+        <div class="result-text">
+          <div class="result-title" id="q-result-title"></div>
+          <div class="result-body" id="q-explain"></div>
+        </div>
+        <button type="button" class="cta small" id="btn-nextq"></button>
+      </div>
+    </div>
+
+    <!-- Level 3: memory match -->
+    <div class="screen" id="s-play2" hidden>
+      <div class="meter-row">
+        <div class="meter-label grow" id="pair-text"></div>
+        <div class="pips-row">
+          <span class="meter-label" id="miss-text"></span>
+          <span class="pips small" id="miss-pips"></span>
+        </div>
+      </div>
+      <p class="hint">Flip two cards. Match each kind of data with the shield that protects it.</p>
+      <div class="cards" id="cards"></div>
+    </div>
+
+    <!-- Level 4: boss fight -->
+    <div class="screen" id="s-play3" hidden>
+      <div class="boss">
+        <svg aria-hidden="true" class="boss-art" viewBox="0 0 140 130">
+          <rect x="52" y="6" width="36" height="14" rx="5" fill="#FFD54A" stroke="#0E0C2B" stroke-width="4"/>
+          <line x1="70" y1="20" x2="70" y2="30" stroke="#0E0C2B" stroke-width="4" stroke-linecap="round"/>
+          <rect x="12" y="30" width="116" height="84" rx="24" fill="#FF6B5E" stroke="#0E0C2B" stroke-width="4"/>
+          <ellipse cx="48" cy="66" rx="14" ry="13" fill="#F6F4FF" stroke="#0E0C2B" stroke-width="3"/>
+          <ellipse cx="92" cy="66" rx="14" ry="13" fill="#F6F4FF" stroke="#0E0C2B" stroke-width="3"/>
+          <circle cx="52" cy="69" r="6" fill="#0E0C2B"/>
+          <circle cx="88" cy="69" r="6" fill="#0E0C2B"/>
+          <path d="M30 44 L60 54 M110 44 L80 54" fill="none" stroke="#0E0C2B" stroke-width="5" stroke-linecap="round"/>
+          <rect x="38" y="88" width="64" height="20" rx="10" fill="#0E0C2B"/>
+          <path d="M44 90 L52 100 L60 90 L68 100 L76 90 L84 100 L92 90 L96 92" fill="none" stroke="#F6F4FF" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="8" cy="88" r="9" fill="#A78BFA" stroke="#0E0C2B" stroke-width="4"/>
+          <circle cx="132" cy="88" r="9" fill="#A78BFA" stroke="#0E0C2B" stroke-width="4"/>
+        </svg>
+        <div class="boss-info">
+          <div class="boss-top">
+            <div class="boss-name">Mega-Grab 9000</div>
+            <div class="pips-row">
+              <span class="shield-label">Shield</span>
+              <span class="pips" id="shield-pips"></span>
+            </div>
+          </div>
+          <div class="bar thin"><div class="bar-fill pink-bg" id="boss-hp"></div></div>
+          <div class="boss-line" id="boss-line"></div>
+        </div>
+      </div>
+      <div class="prompt" id="b-prompt"></div>
+      <div class="moves" id="moves"></div>
+      <div class="result">
+        <div class="result-body grow" id="b-msg"></div>
+        <button type="button" class="cta small" id="btn-nextround" hidden></button>
+      </div>
+    </div>
+
+    <!-- Level won -->
+    <div class="screen center" id="s-win" hidden>
+      <div class="panel" style="border-top-color:#5EEAD4">
+        <div class="eyebrow teal">Level complete</div>
+        <h2 class="h2" id="win-title"></h2>
+        <div class="label">What Byte learned</div>
+        <p class="lesson" id="win-lesson"></p>
+        <div class="score" id="win-score"></div>
+      </div>
+      <div><button type="button" class="cta big" id="btn-next"></button></div>
+    </div>
+
+    <!-- Level lost -->
+    <div class="screen center" id="s-lose" hidden>
+      <div class="panel" style="border-top-color:#FF6B5E">
+        <div class="eyebrow red">Not this time</div>
+        <h2 class="h2">Byte needs a reboot</h2>
+        <p class="lesson" id="lose-text"></p>
+      </div>
+      <div><button type="button" class="cta big" id="btn-retry">Try again</button></div>
+    </div>
+
+    <!-- The end -->
+    <div class="screen center tight" id="s-end" hidden>
+      <div class="eyebrow teal">You did it!</div>
+      <h2 class="h2 end-title"><button type="button" class="plain" id="party" aria-label="Byte saved the day. Press for confetti.">Byte saved the day</button></h2>
+      <p class="end-text" id="end-text"></p>
+      <div class="eyebrow yellow">Real-world power-ups</div>
+      <ol class="tips">
+        <li><strong>Turn on Global Privacy Control.</strong> Some browsers and extensions can send an opt-out signal to every site you visit.</li>
+        <li><strong>Learn your state's rights.</strong> A growing number of states let you access, delete and opt out of the sale of your data.</li>
+        <li><strong>Tidy your phone settings.</strong> Reset your ad ID and share location only while an app is in use.</li>
+        <li><strong>Speak up.</strong> Tell your members of Congress that strong privacy protections should not depend on where you live.</li>
+      </ol>
+      <div><button type="button" class="cta medium" id="btn-restart">Play again</button></div>
+      <p class="fine">Facts are simplified for play. Check official sources for the rules where you live.</p>
+    </div>
+
+  </section>
+
+  <div class="sparkles" id="sparkles" aria-hidden="true"></div>
+</main>
+<script src="game.js"></script>
+</body>
+</html>
