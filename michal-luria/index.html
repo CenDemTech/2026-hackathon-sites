@@ -3,106 +3,147 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hello World</title>
+<title>Michal Luria, Ph.D.</title>
+<meta name="description" content="Michal Luria — Senior Research Fellow at the Center for Democracy &amp; Technology, researching AI chatbots, child safety online, and human-centered tech policy.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&amp;family=Inter:wght@400;700;800&amp;display=swap">
-<style>
-  body { margin: 0; background: #fdf6e3; }
-  a { color: #2b4c7e; }
-  a:hover { color: #1a2f4f; }
-
-  main {
-    min-height: 100vh;
-    box-sizing: border-box;
-    padding: 48px 16px 64px;
-    background: #fdf6e3;
-    font-family: 'Inter', system-ui, sans-serif;
-    color: #1b1b1f;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 40px;
-  }
-
-  figure {
-    margin: 0;
-    width: 100%;
-    max-width: 640px;
-    position: relative;
-    border: 6px solid #1b1b1f;
-    border-radius: 4px;
-    overflow: hidden;
-    background: #cfd8dc;
-  }
-
-  figure svg { display: block; width: 100%; height: auto; }
-
-  figcaption {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    pointer-events: none;
-    font-family: 'Anton', Impact, sans-serif;
-    font-size: clamp(22px, 6vw, 40px);
-    line-height: 1.05;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    text-align: center;
-    color: #ffffff;
-    text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000,
-                 0 3px 0 #000, 0 -3px 0 #000, 3px 0 0 #000, -3px 0 0 #000;
-  }
-
-  h1 {
-    margin: 0;
-    font-size: clamp(48px, 10vw, 112px);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1;
-    text-align: center;
-  }
-</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@600&amp;family=Space+Mono:wght@400;700&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="page">
+<div class="stripe" aria-hidden="true"></div>
+<div class="stripe tint" aria-hidden="true"></div>
+
+<div class="wrap">
+
+<header>
+  <div class="brand">
+    <a class="name" href="#home">Michal Luria<span class="cursor" aria-hidden="true">_</span></a>
+    <div class="tagline">Senior Human-Centered Researcher / Tech &amp; Policy</div>
+  </div>
+  <nav aria-label="Sections">
+    <a href="#home" aria-current="page">Home</a>
+    <a href="#research">Research</a>
+    <a href="#writing">Writing</a>
+    <a href="#advising">Advising</a>
+  </nav>
+</header>
+
 <main>
-  <figure>
-    <svg viewBox="0 0 400 300" role="img" aria-label="Cartoon orange tabby cat fast asleep on a cushion">
-      <rect x="0" y="0" width="400" height="210" fill="#d7e3ea"></rect>
-      <rect x="0" y="210" width="400" height="90" fill="#b08968"></rect>
-      <rect x="290" y="40" width="80" height="100" fill="#f1f5f8" stroke="#9fb3c0" stroke-width="4"></rect>
-      <line x1="330" y1="40" x2="330" y2="140" stroke="#9fb3c0" stroke-width="4"></line>
-      <line x1="290" y1="90" x2="370" y2="90" stroke="#9fb3c0" stroke-width="4"></line>
-      <ellipse cx="200" cy="238" rx="160" ry="34" fill="#5b7db1"></ellipse>
-      <ellipse cx="200" cy="230" rx="150" ry="26" fill="#7396cc"></ellipse>
-      <path d="M300 215 C350 210 360 180 335 170 C320 165 315 180 330 185" fill="none" stroke="#e08a3c" stroke-width="16" stroke-linecap="round"></path>
-      <ellipse cx="215" cy="205" rx="105" ry="40" fill="#f4a259"></ellipse>
-      <path d="M190 168 q8 20 0 40 M220 166 q8 22 0 44 M250 170 q8 20 0 38" fill="none" stroke="#d9822b" stroke-width="7" stroke-linecap="round"></path>
-      <ellipse cx="150" cy="232" rx="30" ry="11" fill="#f8c08a"></ellipse>
-      <polygon points="78,160 86,118 112,148" fill="#f4a259"></polygon>
-      <polygon points="84,154 89,128 104,147" fill="#f7b7a3"></polygon>
-      <polygon points="128,146 152,116 158,158" fill="#f4a259"></polygon>
-      <polygon points="134,147 150,126 153,153" fill="#f7b7a3"></polygon>
-      <circle cx="118" cy="190" r="44" fill="#f4a259"></circle>
-      <path d="M100 186 q8 7 16 0" fill="none" stroke="#1b1b1f" stroke-width="3.5" stroke-linecap="round"></path>
-      <path d="M128 184 q8 7 16 0" fill="none" stroke="#1b1b1f" stroke-width="3.5" stroke-linecap="round"></path>
-      <path d="M118 198 l-5 -4 h10 z" fill="#d6665a"></path>
-      <path d="M118 199 q-5 7 -10 3 M118 199 q5 7 10 3" fill="none" stroke="#1b1b1f" stroke-width="2.5" stroke-linecap="round"></path>
-      <path d="M92 200 h-24 M92 206 l-22 5 M146 198 h24 M146 204 l22 5" stroke="#1b1b1f" stroke-width="1.8" stroke-linecap="round"></path>
-      <text x="168" y="140" font-family="Anton, Impact, sans-serif" font-size="22" fill="#5b7db1">z</text>
-      <text x="184" y="118" font-family="Anton, Impact, sans-serif" font-size="30" fill="#5b7db1">z</text>
-      <text x="206" y="90" font-family="Anton, Impact, sans-serif" font-size="40" fill="#5b7db1">Z</text>
-    </svg>
-    <figcaption>
-      <span>I am not sleeping</span>
-      <span>I am in power-saving mode</span>
-    </figcaption>
-  </figure>
-  <h1>Hello World</h1>
+
+<!-- HOME -->
+<section id="home" class="home">
+  <div class="intro">
+    <img src="assets/michal-luria.jpg" alt="Michal Luria, smiling, in glasses, in front of a window">
+    <div class="intro-text">
+      <p>Michal Luria is a Senior Research Fellow at the <a href="https://cdt.org/people/michal-luria/">Center for Democracy &amp; Technology</a>, leading its research on AI chatbots and child safety online. Her qualitative, mixed-methods and human-centered research explores and critiques interactions with emerging technologies, and translates what it finds into policy, ethics and advocacy. She holds a Ph.D. in Human-Computer Interaction from Carnegie Mellon University. Her writing has appeared in Wired, CNN and MIT Technology Review; her work has been featured by NBC, BBC News, The Verge and Dezeen.</p>
+      <div class="links">
+        <a href="mailto:luria.mic@gmail.com">email</a>
+        <a href="https://scholar.google.com/citations?user=bLShnf0AAAAJ&amp;hl=en">google scholar</a>
+        <a href="https://www.linkedin.com/in/michalluria/">linkedin</a>
+        <a href="assets/Michal-Luria-CV.pdf">cv.pdf</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="columns">
+    <div class="news">
+      <h2>Latest news</h2>
+      <div class="news-list">
+        <div class="news-item"><span class="mono-date">Nov 2026</span><span>Workshop at Cornell: <a href="https://cdt.org/events/translating-qualitative-research-into-policy-impact-a-value-sensitive-approach/">Translating Qualitative Research into Policy Impact</a> on Nov 19th.</span></div>
+        <div class="news-item"><span class="mono-date">Oct 2026</span><span>New op-ed in <a href="https://www.technologyreview.com/2026/10/16/1146834/kids-are-outsmarting-social-media-bans-thats-not-a-problem-we-need-to-solve/">MIT Technology Review</a> with Aliya Bhatia and danah boyd</span></div>
+        <div class="news-item"><span class="mono-date">Sep 2026</span><span>Interviewed by <a href="https://futurism.com/artificial-intelligence/openai-workers-read-private-chats">Futurism</a> on human review of private chatbot conversations</span></div>
+        <div class="news-item"><span class="mono-date">Jun 2026</span><span>New project with Wellesley College on <a href="https://cdt.org/insights/new-cdt-research-will-explore-the-impacts-of-social-relationships-with-ai-chatbots-on-neurodivergent-young-adults/">AI chatbot relationships and neurodivergent young adults</a></span></div>
+        <div class="news-item"><span class="mono-date">Jun 2026</span><span>Published <a href="https://cdt.org/insights/assessing-the-polyglot-chatbot-multilingual-safety-in-ai-systems/">Assessing the Polyglot Chatbot: Multilingual Safety in AI Systems</a></span></div>
+      </div>
+    </div>
+
+    <div class="selected">
+      <h2>Selected work</h2>
+      <div class="cards">
+        <a class="card" href="https://cdt.org/insights/dark-patterns-in-ai-chatbots-a-taxonomy-to-inform-better-design/"><span class="card-title">Dark Patterns in AI Chatbots: A Taxonomy to Inform Better Design</span><span class="card-meta">Joshi, Adjagbodjou &amp; Luria. <i>CDT</i>, 2026.</span></a>
+        <a class="card" href="https://www.technologyreview.com/2026/10/16/1146834/kids-are-outsmarting-social-media-bans-thats-not-a-problem-we-need-to-solve/"><span class="card-title">Kids Are Outsmarting Social Media Bans. That’s Not a Problem We Need To Solve.</span><span class="card-meta">Luria, Bhatia &amp; boyd. <i>MIT Technology Review</i>, 2026.</span></a>
+        <a class="card" href="https://cdt.org/insights/the-kids-are-online-research-driven-insights-on-child-safety-policy/"><span class="card-title">The Kids Are Online: Research-Driven Insights on Child Safety Policy</span><span class="card-meta">Luria &amp; Bhatia. <i>CDT</i>, 2025.</span></a>
+        <div class="card"><span class="card-title">Disqualified by Disability: Digitized Hiring Assessments and Disabled Workers</span><span class="card-meta">Luria, Scherer, Aboulafia &amp; Thakur. <i>CHI</i> 2026.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESEARCH -->
+<section id="research" class="research">
+  <div class="topics">
+    <div class="topic">
+      <div><h2>AI chatbots &amp; social agents</h2><p class="topic-blurb">How chatbot design shapes users’ trust, attachment and autonomy.</p></div>
+      <div class="pubs">
+        <div><a href="https://cdt.org/insights/dark-patterns-in-ai-chatbots-a-taxonomy-to-inform-better-design/">Dark Patterns in AI Chatbots: A Taxonomy to Inform Better Design</a><div class="meta">Joshi, R., Adjagbodjou, A. &amp; Luria, M. (2026). <i>Center for Democracy &amp; Technology</i>.</div></div>
+        <div><a href="https://cdt.org/insights/assessing-the-polyglot-chatbot-multilingual-safety-in-ai-systems/">Assessing the Polyglot Chatbot: Multilingual Safety in AI Systems</a><div class="meta">Bhatia, A., Daepp, M. &amp; Luria, M. (2026). <i>Center for Democracy &amp; Technology</i>.</div></div>
+        <div><a href="https://cdt.org/insights/new-cdt-research-will-explore-the-impacts-of-social-relationships-with-ai-chatbots-on-neurodivergent-young-adults/">AI chatbot relationships and neurodivergent young adults</a><div class="meta">Luria, M. &amp; Clark, M. (2026). Ongoing, with Wellesley College.</div></div>
+      </div>
+    </div>
+
+    <div class="topic">
+      <div><h2>Kids’ online safety</h2><p class="topic-blurb">What young people and parents need from safety tools and policy.</p></div>
+      <div class="pubs">
+        <div><a href="https://cdt.org/insights/the-kids-are-online-research-driven-insights-on-child-safety-policy/">The Kids Are Online: Research-Driven Insights on Child Safety Policy</a><div class="meta">Luria, M. &amp; Bhatia, A. (2025). <i>Center for Democracy &amp; Technology</i>.</div></div>
+        <div><a href="https://cdt.org/insights/what-kids-and-parents-want-policy-insights-for-social-media-safety-features/">What Kids and Parents Want: Policy Insights for Social Media Safety Features</a><div class="meta">Luria, M. &amp; Bhatia, A. (2025). <i>Center for Democracy &amp; Technology</i>.</div></div>
+        <div><a href="https://cdt.org/insights/more-tools-more-control-lessons-from-young-users-on-handling-unwanted-messages-online/">More Tools, More Control: Lessons from Young Users on Handling Unwanted Messages Online</a><div class="meta">Luria, M. (2023). <i>Center for Democracy &amp; Technology</i>.</div></div>
+      </div>
+    </div>
+
+    <div class="topic">
+      <div><h2>Platform accountability</h2><p class="topic-blurb">Transparency, and who gets left out of automated systems.</p></div>
+      <div class="pubs">
+        <div><span>Disqualified by Disability: The Exclusion of Disabled Workers by Digitized Hiring Assessments</span><div class="meta">Luria, M., Scherer, M., Aboulafia, A. &amp; Thakur, D. (2026). <i>Proc. CHI ’26</i>.</div></div>
+        <div><span>Co-Design Perspectives on Algorithm Transparency Reporting: Guidelines and Prototypes</span><div class="meta">Luria, M. (2023). <i>Proc. FAccT ’23</i>.</div></div>
+        <div><span>Understanding Innovation in Interoperable Systems: A Podcasting Case Study</span><div class="meta">Luria, M. &amp; Nicholas, G. (2023). <i>Center for Democracy &amp; Technology</i>.</div></div>
+      </div>
+    </div>
+
+    <div class="topic">
+      <div><h2>Social robots &amp; agents <span style="font-size: 15px">(Ph.D.)</span></h2><p class="topic-blurb">Research through design on agents in homes and communities, at CMU.</p></div>
+      <div class="pubs">
+        <div><span>Letters from the Future: Exploring Ethical Dilemmas in the Design of Social Agents</span><div class="meta">Luria, M. &amp; Candy, S. (2022). <i>Proc. CHI ’22</i>.</div></div>
+        <div><span>Robotic Futures: Learning about Personally-Owned Agents through Performance</span><div class="meta">Luria, M., Oden Choi, J., Karp, R., Zimmerman, J. &amp; Forlizzi, J. (2020). <i>Proc. DIS ’20</i>. Best Paper Honorable Mention.</div></div>
+        <div><span>Investigating Boundaries for Personal Agents Operating in the Interpersonal Space of the Home</span><div class="meta">Luria, M., Zheng, B., Huffman, B., Huang, S., Forlizzi, J. &amp; Zimmerman, J. (2020). <i>Proc. CHI ’20</i>.</div></div>
+      </div>
+    </div>
+  </div>
+  <p class="note">Full list on <a href="https://scholar.google.com/citations?user=bLShnf0AAAAJ&amp;hl=en">Google Scholar</a>.</p>
+</section>
+
+<!-- WRITING -->
+<section id="writing" class="list">
+  <h2>Selected op-eds</h2>
+  <div class="row"><span class="mono-date">2026</span><div><a href="https://www.technologyreview.com/2026/10/16/1146834/kids-are-outsmarting-social-media-bans-thats-not-a-problem-we-need-to-solve/">Kids Are Outsmarting Social Media Bans. That’s Not a Problem We Need To Solve.</a><div class="where">MIT Technology Review · with Aliya Bhatia and danah boyd</div></div></div>
+  <div class="row"><span class="mono-date">2025</span><div><a href="https://www.techpolicy.press/ai-chatbots-are-emotionally-deceptive-by-design/">AI Chatbots Are Emotionally Deceptive by Design</a><div class="where">Tech Policy Press</div></div></div>
+  <div class="row"><span class="mono-date">2025</span><div><a href="https://www.compiler.news/openai-anthropic-chatgpt-engagement/">AI Labs Want More of Your Time. That’s a Problem.</a><div class="where">Compiler</div></div></div>
+  <div class="row"><span class="mono-date">2024</span><div><a href="https://www.cnn.com/2024/05/15/opinions/social-media-monitoring-restriction-legislation-mediation-luria-bhatia/index.html">Restricting and monitoring social media won’t protect kids — here’s what will</a><div class="where">CNN</div></div></div>
+  <div class="row"><span class="mono-date">2023</span><div><a href="https://www.wired.com/story/chatgpt-social-roles-psychology">Your ChatGPT Relationship Status Shouldn’t Be Complicated</a><div class="where">Wired</div></div></div>
+  <p class="note">More on <a href="https://cdt.org/the-latest/?person_tax=182">CDT</a>.</p>
+</section>
+
+<!-- ADVISING -->
+<section id="advising" class="list">
+  <h2>Advisory service &amp; policy</h2>
+  <div class="row"><span class="mono-date">2026</span><div><span>Expert Working Group on Teens, AI and Emotional Dependence</span><div class="where">Microsoft</div></div></div>
+  <div class="row"><span class="mono-date">2026</span><div><span>Psychosocial Reliability Benchmark Task Force</span><div class="where">MLCommons</div></div></div>
+  <div class="row"><span class="mono-date">2026</span><div><span>Public Technology Leadership Collaborative on Chatbot Design</span><div class="where">Data &amp; Society</div></div></div>
+  <div class="row"><span class="mono-date">2026</span><div><span>Problematic Use Metrics Expert Working Group</span><div class="where">Knight-Georgetown Institute</div></div></div>
+  <div class="row"><span class="mono-date">2026</span><div><span>Comments on governing chatbots for 13–17 year olds</span><div class="where">Meta Oversight Board</div></div></div>
+  <div class="row"><span class="mono-date">2025</span><div><span>Testimony on protections for users of social media</span><div class="where">Colorado Senate Judiciary Committee</div></div></div>
+</section>
+
 </main>
+
+<footer>
+  <span>© 2026 Michal Luria</span>
+  <span>Last updated: Nov 2026</span>
+</footer>
+
+</div>
+</div>
+<script src="script.js"></script>
 </body>
 </html>
