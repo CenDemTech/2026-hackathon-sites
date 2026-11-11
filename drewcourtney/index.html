@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Spirit Parlour</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&amp;family=IM+Fell+English+SC&amp;display=swap">
+<style>
+body{margin:0;background:#e6d8ba}
+a{color:#6e1d1b}a:hover{color:#3d0f0e}
+button,input{font-family:inherit}
+button:disabled{opacity:.5;cursor:wait}
+button:focus-visible,input:focus-visible{outline:2px solid #6e1d1b;outline-offset:3px}
+[hidden]{display:none!important}
+.sc{font-family:'IM Fell English SC',Georgia,serif;font-weight:400}
+.page{min-height:100vh;box-sizing:border-box;padding:40px 16px 64px;color:#2b2118;font-family:'IM Fell English',Georgia,serif;background:radial-gradient(ellipse at 50% 30%,#efe4cc 0%,#e6d8ba 60%,#d9c8a4 100%)}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+header{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;border-top:4px double #2b2118;border-bottom:4px double #2b2118;padding:18px 8px 16px}
+header p,header h1{margin:0}
+.row{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+figure{flex:999 1 600px;min-width:0;margin:0;display:flex;flex-direction:column;gap:12px}
+.frame{border:3px solid #2b2118;outline:1px solid #2b2118;outline-offset:5px;margin:6px;background:#efe4cc}
+.frame svg{display:block;width:100%;height:auto}
+figcaption{display:flex;flex-direction:column;gap:6px;text-align:center;padding:0 8px}
+.panel{flex:1 1 360px;min-width:0;box-sizing:border-box;border:4px double #2b2118;background:#f3ead6;padding:24px;display:flex;flex-direction:column;gap:18px}
+.panel h2,.panel h3,.panel p{margin:0}
+.stack{display:flex;flex-direction:column}
+.spirit-btn{display:flex;flex-direction:column;gap:3px;text-align:left;min-height:44px;padding:12px 14px;background:#efe4cc;border:1px solid #2b2118;color:#2b2118;cursor:pointer}
+.spirit-btn:hover{background:#e6d8ba}
+.kicker{font-family:'IM Fell English SC',Georgia,serif;font-size:14px;letter-spacing:.15em;color:#6e1d1b}
+.ask{flex:1 1 160px;min-height:44px;padding:10px 18px;background:#6e1d1b;color:#f3ead6;border:1px solid #3d0f0e;font-family:'IM Fell English SC',Georgia,serif;font-size:19px;cursor:pointer}
+.close{flex:0 1 auto;min-height:44px;padding:10px 16px;background:transparent;color:#2b2118;border:1px solid #2b2118;font-size:17px;cursor:pointer}
+#spirit-q{min-height:44px;box-sizing:border-box;padding:10px 12px;font-size:18px;background:#fbf7ec;color:#2b2118;border:1px solid #2b2118}
+.plate{transition:filter 1.4s ease}
+.plate.dim{filter:brightness(.82) contrast(1.1)}
+.glow{opacity:.85;transition:opacity 1s}
+.glow.dim{opacity:.35}
+.flame{transform-box:fill-box;transform-origin:50% 100%;animation:flick 1.4s ease-in-out infinite}
+.flame.gutter{animation:gutter .45s ease-in-out 6}
+@keyframes flick{0%,100%{transform:scale(1,1)}50%{transform:scale(.92,1.07) skewX(2deg)}}
+@keyframes gutter{0%,100%{transform:scale(1,1)}30%{transform:scale(.6,.45) skewX(-20deg)}65%{transform:scale(1.25,1.6) skewX(16deg)}}
+.tbl{transform-box:view-box;transform-origin:450px 445px}
+.tbl.tilt{animation:tilt 2.8s ease-in-out}
+.tbl.knock{animation:knock .55s ease-out 3}
+@keyframes tilt{0%,100%{transform:rotate(0)}30%,65%{transform:rotate(-3deg) translateY(-9px)}}
+@keyframes knock{0%,100%{transform:translateY(0)}15%{transform:translateY(-3px)}35%{transform:translateY(1px)}}
+.planch{transform-box:fill-box;transform-origin:center}
+.planch.move{animation:glide 2.8s ease-in-out}
+@keyframes glide{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(40px,-6px) rotate(12deg)}50%{transform:translate(12px,8px) rotate(-8deg)}75%{transform:translate(58px,2px) rotate(6deg)}}
+.bell{transform-box:fill-box;transform-origin:50% 0}
+.bell.ring{animation:ring .22s ease-in-out 12}
+@keyframes ring{0%,100%{transform:rotate(0)}25%{transform:rotate(14deg)}75%{transform:rotate(-14deg)}}
+.portrait{transform-box:fill-box;transform-origin:50% 0;transition:transform 1.4s cubic-bezier(.3,1.7,.5,1)}
+.portrait.swing{transform:rotate(9deg)}
+.mist{opacity:0;transition:opacity 1.8s ease}
+.mist.on{opacity:.9;animation:drift 5s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(8px,-10px)}}
+.raps{opacity:0}
+.raps.on{animation:raps 3s ease-out forwards}
+@keyframes raps{0%{opacity:0}15%,70%{opacity:1}100%{opacity:0}}
+.letter{display:inline-block;opacity:0;animation:appear .5s ease forwards}
+@keyframes appear{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.fadein{animation:appear .9s ease both}
+@media (prefers-reduced-motion: reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.letter{opacity:1}}
+</style>
+</head>
+<body>
+<div class="page">
+<div class="wrap">
+
+<header>
+<p class="sc" style="font-size:15px;letter-spacing:.2em">No. 7 Holloway Crescent · Sittings Nightly at Nine</p>
+<h1 class="sc" style="font-size:clamp(40px,6vw,72px);line-height:1;letter-spacing:.02em">The Spirit Parlour</h1>
+<p style="font-style:italic;font-size:19px">Being a Faithful Apparatus for Communion with the Departed, conducted by Madame Ottoline Vesper</p>
+</header>
+
+<div class="row">
+
+<figure>
+<div id="fx-plate" class="frame plate">
+<svg viewBox="0 0 900 560" role="img" aria-label="An engraving of a Victorian séance: an elderly medium in a lace cap sits in trance behind a round, draped table lit by a single candle; a whiskered colonel, a young lady with ringlets, and a gentleman seen from behind join hands around it." style="display: block; width: 100%; height: auto">
+<defs>
+<pattern id="hLight" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#2b2118" stroke-width="0.7"></line></pattern>
+<pattern id="hMid" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-35)"><line x1="0" y1="0" x2="0" y2="4" stroke="#2b2118" stroke-width="1"></line></pattern>
+<pattern id="hDark" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="#2b2118" stroke-width="1.3"></line><line x1="0" y1="0" x2="4" y2="0" stroke="#2b2118" stroke-width="1.1"></line></pattern>
+<pattern id="hVert" width="5" height="10" patternUnits="userSpaceOnUse"><line x1="1" y1="0" x2="1" y2="10" stroke="#2b2118" stroke-width="1.4"></line></pattern>
+<radialGradient id="glowGrad"><stop offset="0" stop-color="#f6eedb" stop-opacity="1"></stop><stop offset="0.55" stop-color="#f3ead3" stop-opacity="0.85"></stop><stop offset="1" stop-color="#efe4cc" stop-opacity="0"></stop></radialGradient>
+</defs>
+
+<rect width="900" height="560" fill="#efe4cc"></rect>
+<rect width="900" height="400" fill="url(#hLight)"></rect>
+<rect y="300" width="900" height="100" fill="url(#hMid)"></rect>
+<line x1="0" y1="300" x2="900" y2="300" stroke="#2b2118" stroke-width="2"></line>
+<line x1="0" y1="306" x2="900" y2="306" stroke="#2b2118" stroke-width="1"></line>
+<line x1="0" y1="400" x2="900" y2="400" stroke="#2b2118" stroke-width="2"></line>
+<g stroke="#2b2118" stroke-width="1" fill="none"><path d="M0 425 H900"></path><path d="M0 455 H900"></path><path d="M0 492 H900"></path><path d="M0 535 H900"></path><path d="M120 400 L60 560"></path><path d="M300 400 L270 560"></path><path d="M600 400 L630 560"></path><path d="M780 400 L840 560"></path></g>
+
+<circle id="fx-glow" class="glow" cx="450" cy="270" r="150" fill="url(#glowGrad)"></circle>
+
+<g id="fx-portrait" class="portrait">
+<path d="M450 30 L418 46 M450 30 L482 46" stroke="#2b2118" stroke-width="1.2" fill="none"></path>
+<circle cx="450" cy="30" r="3" fill="#2b2118"></circle>
+<ellipse cx="450" cy="90" rx="44" ry="50" fill="#efe4cc" stroke="#2b2118" stroke-width="4"></ellipse>
+<ellipse cx="450" cy="90" rx="37" ry="43" fill="url(#hDark)" stroke="#2b2118" stroke-width="1"></ellipse>
+<ellipse cx="450" cy="82" rx="13" ry="16" fill="#efe4cc"></ellipse>
+<path d="M437 88 Q450 112 463 88 L460 100 Q450 108 440 100 Z" fill="url(#hMid)"></path>
+<path d="M424 130 Q450 100 476 130 Z" fill="#efe4cc"></path>
+</g>
+
+<path d="M0 0 H900 V30 Q855 58 810 30 Q765 58 720 30 Q675 58 630 30 Q585 58 540 30 Q495 58 450 30 Q405 58 360 30 Q315 58 270 30 Q225 58 180 30 Q135 58 90 30 Q45 58 0 30 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.5"></path>
+<path d="M0 30 Q45 58 90 30 Q135 58 180 30 Q225 58 270 30 Q315 58 360 30 Q405 58 450 30 Q495 58 540 30 Q585 58 630 30 Q675 58 720 30 Q765 58 810 30 Q855 58 900 30" fill="none" stroke="#2b2118" stroke-width="6" stroke-dasharray="1 4" transform="translate(0 6)"></path>
+
+<g>
+<path d="M0 0 H170 C150 120 120 200 95 260 C80 300 70 380 60 560 H0 Z" fill="url(#hVert)" stroke="#2b2118" stroke-width="2"></path>
+<path d="M40 0 C40 200 30 380 20 560 M90 0 C85 150 60 300 45 560 M132 0 C120 120 100 210 92 262" fill="none" stroke="#2b2118" stroke-width="2.5"></path>
+<path d="M78 252 Q100 262 112 250 Q104 274 82 270 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.5"></path>
+</g>
+<g transform="translate(900 0) scale(-1 1)">
+<path d="M0 0 H170 C150 120 120 200 95 260 C80 300 70 380 60 560 H0 Z" fill="url(#hVert)" stroke="#2b2118" stroke-width="2"></path>
+<path d="M40 0 C40 200 30 380 20 560 M90 0 C85 150 60 300 45 560 M132 0 C120 120 100 210 92 262" fill="none" stroke="#2b2118" stroke-width="2.5"></path>
+<path d="M78 252 Q100 262 112 250 Q104 274 82 270 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.5"></path>
+</g>
+
+<text id="fx-raps" class="raps" x="300" y="160" text-anchor="middle" transform="rotate(-7 300 160)" font-family="'IM Fell English', Georgia, serif" font-style="italic" font-size="30" fill="#6e1d1b">Rap … rap … rap …</text>
+
+<g>
+<path d="M383 335 C383 282 400 250 450 242 C500 250 517 282 517 335 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.5"></path>
+<path d="M396 262 Q450 302 504 262 L474 322 Q450 334 426 322 Z" fill="url(#hMid)" stroke="#2b2118" stroke-width="1.2"></path>
+<path d="M426 322 Q450 334 474 322" fill="none" stroke="#2b2118" stroke-width="7" stroke-dasharray="1 3" transform="translate(0 5)"></path>
+<rect x="439" y="216" width="22" height="30" fill="#efe4cc" stroke="#2b2118" stroke-width="1.2"></rect>
+<path d="M436 244 Q443 236 450 244 Q457 236 464 244" fill="none" stroke="#2b2118" stroke-width="1.2"></path>
+<circle cx="450" cy="252" r="5" fill="#efe4cc" stroke="#2b2118" stroke-width="1.5"></circle>
+<ellipse cx="450" cy="192" rx="26" ry="31" fill="#efe4cc" stroke="#2b2118" stroke-width="1.6"></ellipse>
+<path d="M424 186 C424 162 440 157 450 159 C460 157 476 162 476 186 C470 173 460 169 450 171 C440 169 430 173 424 186 Z" fill="url(#hMid)" stroke="#2b2118" stroke-width="1"></path>
+<path d="M418 180 C414 150 440 140 450 140 C460 140 486 150 482 180 C478 163 465 155 450 155 C435 155 422 163 418 180 Z" fill="#efe4cc" stroke="#2b2118" stroke-width="1.4"></path>
+<path d="M418 180 C414 150 440 140 450 140 C460 140 486 150 482 180" fill="none" stroke="#2b2118" stroke-width="5" stroke-dasharray="1.5 3.5"></path>
+<path d="M420 180 L413 222 M480 180 L487 222" stroke="#2b2118" stroke-width="1.2" fill="none"></path>
+<path d="M435 186 Q440 182 445 186 M455 186 Q460 182 465 186" fill="none" stroke="#2b2118" stroke-width="1.2"></path>
+<path d="M435 193 Q440 197 445 193 M455 193 Q460 197 465 193" fill="none" stroke="#2b2118" stroke-width="1.5"></path>
+<path d="M450 196 L447 207 L453 208" fill="none" stroke="#2b2118" stroke-width="1.2"></path>
+<path d="M443 214 Q450 216 457 214" fill="none" stroke="#2b2118" stroke-width="1.4"></path>
+<path d="M431 200 Q434 205 433 211 M469 200 Q466 205 467 211 M440 218 Q450 223 460 218" fill="none" stroke="#2b2118" stroke-width="0.8"></path>
+<path d="M394 278 C381 298 372 320 380 340 L398 338 C396 318 404 300 412 290 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.2"></path>
+<path d="M506 278 C519 298 528 320 520 340 L502 338 C504 318 496 300 488 290 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.2"></path>
+</g>
+
+<g>
+<path d="M148 425 C148 332 170 288 210 280 C250 287 268 322 276 362 L272 425 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.5"></path>
+<path d="M203 268 L231 268 L227 288 L207 288 Z" fill="#efe4cc" stroke="#2b2118" stroke-width="1.2"></path>
+<path d="M210 286 L222 292 L210 299 Z M222 292 L234 286 L234 299 Z" fill="#2b2118"></path>
+<ellipse cx="216" cy="244" rx="22" ry="27" fill="#efe4cc" stroke="#2b2118" stroke-width="1.6"></ellipse>
+<path d="M195 240 C193 224 199 215 206 214 L207 262 C199 259 195 250 195 240 Z" fill="url(#hMid)" stroke="#2b2118" stroke-width="1"></path>
+<path d="M222 250 C230 262 228 274 216 276 C210 269 212 259 214 250 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1"></path>
+<path d="M235 236 L244 247 L236 250" fill="#efe4cc" stroke="#2b2118" stroke-width="1.3"></path>
+<circle cx="229" cy="236" r="1.8" fill="#2b2118"></circle>
+<path d="M225 231 L233 230" stroke="#2b2118" stroke-width="1.6"></path>
+<path d="M230 254 Q240 254 243 262 Q236 259 228 259 Z" fill="#2b2118"></path>
+<ellipse cx="210" cy="244" rx="4" ry="6" fill="#efe4cc" stroke="#2b2118" stroke-width="1"></ellipse>
+</g>
+
+<g>
+<path d="M628 425 C632 332 650 290 690 282 C730 290 748 332 752 425 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.5"></path>
+<ellipse cx="660" cy="306" rx="18" ry="22" fill="url(#hMid)" stroke="#2b2118" stroke-width="1.2"></ellipse>
+<path d="M674 272 L702 272 L708 292 Q690 300 670 292 Z" fill="#efe4cc" stroke="#2b2118" stroke-width="1.2"></path>
+<path d="M670 292 Q690 300 708 292" fill="none" stroke="#2b2118" stroke-width="4" stroke-dasharray="1 2.5"></path>
+<ellipse cx="688" cy="246" rx="21" ry="26" fill="#efe4cc" stroke="#2b2118" stroke-width="1.6"></ellipse>
+<path d="M666 242 C664 218 680 211 690 211 C703 211 713 219 711 244 C704 230 697 227 690 227 C682 227 672 232 666 242 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1"></path>
+<circle cx="711" cy="250" r="6.5" fill="url(#hMid)" stroke="#2b2118" stroke-width="1"></circle>
+<circle cx="714" cy="262" r="6.5" fill="url(#hMid)" stroke="#2b2118" stroke-width="1"></circle>
+<circle cx="711" cy="274" r="6.5" fill="url(#hMid)" stroke="#2b2118" stroke-width="1"></circle>
+<path d="M672 240 Q676 237 680 240" fill="none" stroke="#2b2118" stroke-width="1.4"></path>
+<path d="M670 244 L663 255 L669 257" fill="#efe4cc" stroke="#2b2118" stroke-width="1.2"></path>
+<path d="M667 263 Q671 265 675 263" fill="none" stroke="#6e1d1b" stroke-width="1.6"></path>
+</g>
+
+<g id="fx-table" class="tbl">
+<path d="M218 345 C220 380 222 410 226 444 Q260 452 300 444 Q340 454 380 444 Q420 454 450 446 Q480 454 520 444 Q560 454 600 444 Q640 452 674 444 C678 410 680 380 682 345 Z" fill="url(#hMid)" stroke="#2b2118" stroke-width="1.6"></path>
+<path d="M260 392 Q262 420 264 446 M330 396 Q330 425 332 450 M400 397 Q400 425 400 450 M500 397 Q500 425 500 450 M570 396 Q570 425 568 450 M640 392 Q638 420 636 446" fill="none" stroke="#2b2118" stroke-width="2"></path>
+<path d="M226 444 Q260 452 300 444 Q340 454 380 444 Q420 454 450 446 Q480 454 520 444 Q560 454 600 444 Q640 452 674 444" fill="none" stroke="#2b2118" stroke-width="10" stroke-dasharray="1.2 3" transform="translate(0 6)"></path>
+<ellipse cx="450" cy="345" rx="232" ry="52" fill="#efe4cc" stroke="#2b2118" stroke-width="2"></ellipse>
+<ellipse cx="450" cy="345" rx="214" ry="43" fill="none" stroke="#2b2118" stroke-width="1" stroke-dasharray="4 4"></ellipse>
+<g id="fx-planch" class="planch">
+<path d="M312 360 L328 338 L344 360 Q328 370 312 360 Z" fill="#efe4cc" stroke="#2b2118" stroke-width="1.5"></path>
+<circle cx="328" cy="355" r="4" fill="none" stroke="#2b2118" stroke-width="1.2"></circle>
+</g>
+<g id="fx-bell" class="bell">
+<path d="M575 312 L575 300" stroke="#2b2118" stroke-width="2"></path>
+<circle cx="575" cy="297" r="3.5" fill="#2b2118"></circle>
+<path d="M566 338 C566 322 570 313 575 311 C580 313 584 322 584 338 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.3"></path>
+<ellipse cx="575" cy="338" rx="10" ry="2.5" fill="#efe4cc" stroke="#2b2118" stroke-width="1.2"></ellipse>
+</g>
+<ellipse cx="450" cy="352" rx="24" ry="6" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.3"></ellipse>
+<path d="M444 350 L446 324 L454 324 L456 350 Z" fill="url(#hMid)" stroke="#2b2118" stroke-width="1.2"></path>
+<ellipse cx="450" cy="322" rx="14" ry="4" fill="#efe4cc" stroke="#2b2118" stroke-width="1.3"></ellipse>
+<rect x="444" y="278" width="12" height="44" fill="#f6eedb" stroke="#2b2118" stroke-width="1.3"></rect>
+<path d="M447 278 Q446 286 448 290" fill="none" stroke="#2b2118" stroke-width="1"></path>
+<line x1="450" y1="278" x2="450" y2="272" stroke="#2b2118" stroke-width="1.5"></line>
+<g id="fx-flame" class="flame">
+<path d="M450 246 C442 260 443 271 450 275 C457 271 458 260 450 246 Z" fill="#fbf5e6" stroke="#2b2118" stroke-width="1.2"></path>
+<ellipse cx="450" cy="268" rx="2.2" ry="4.5" fill="#2b2118"></ellipse>
+</g>
+<path d="M243 300 C262 312 276 326 286 336 L279 345 C266 333 252 322 236 312 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.2"></path>
+<ellipse cx="292" cy="342" rx="11" ry="6" fill="#efe4cc" stroke="#2b2118" stroke-width="1.3"></ellipse>
+<path d="M664 312 C648 322 630 330 618 336 L624 345 C638 338 654 330 670 322 Z" fill="url(#hMid)" stroke="#2b2118" stroke-width="1.2"></path>
+<ellipse cx="612" cy="341" rx="10" ry="6" fill="#efe4cc" stroke="#2b2118" stroke-width="1.3"></ellipse>
+<ellipse cx="388" cy="341" rx="10" ry="6" fill="#efe4cc" stroke="#2b2118" stroke-width="1.3"></ellipse>
+<ellipse cx="512" cy="341" rx="10" ry="6" fill="#efe4cc" stroke="#2b2118" stroke-width="1.3"></ellipse>
+</g>
+
+<g id="fx-mist" class="mist">
+<path d="M450 246 C418 214 472 186 440 150 C418 120 474 96 448 52 C506 82 482 122 514 152 C548 192 482 218 470 246 Z" fill="#fbf7ec" stroke="#2b2118" stroke-width="1" stroke-dasharray="2 4"></path>
+<path d="M452 236 C436 214 466 196 452 168 C440 140 470 120 458 92" fill="none" stroke="#2b2118" stroke-width="0.8" stroke-dasharray="1 5"></path>
+<circle cx="474" cy="118" r="2" fill="#2b2118"></circle>
+<circle cx="490" cy="120" r="2" fill="#2b2118"></circle>
+</g>
+
+<g>
+<path d="M370 500 C380 460 400 422 410 396 L426 400 C420 428 410 466 402 496 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.2"></path>
+<path d="M530 500 C520 460 500 422 490 396 L474 400 C480 428 490 466 498 496 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.2"></path>
+<ellipse cx="416" cy="394" rx="11" ry="6" fill="#efe4cc" stroke="#2b2118" stroke-width="1.3"></ellipse>
+<ellipse cx="484" cy="394" rx="11" ry="6" fill="#efe4cc" stroke="#2b2118" stroke-width="1.3"></ellipse>
+<path d="M346 560 C350 500 380 478 450 472 C520 478 550 500 554 560 Z" fill="url(#hDark)" stroke="#2b2118" stroke-width="1.6"></path>
+<path d="M420 560 L436 486 M480 560 L464 486" stroke="#2b2118" stroke-width="2" fill="none"></path>
+<path d="M424 468 Q450 478 476 468 L473 482 Q450 490 427 482 Z" fill="#efe4cc" stroke="#2b2118" stroke-width="1.3"></path>
+<ellipse cx="419" cy="442" rx="6" ry="10" fill="#efe4cc" stroke="#2b2118" stroke-width="1.2"></ellipse>
+<ellipse cx="481" cy="442" rx="6" ry="10" fill="#efe4cc" stroke="#2b2118" stroke-width="1.2"></ellipse>
+<ellipse cx="450" cy="438" rx="31" ry="35" fill="url(#hMid)" stroke="#2b2118" stroke-width="1.6"></ellipse>
+<path d="M426 424 Q450 410 474 424" fill="none" stroke="#2b2118" stroke-width="1"></path>
+</g>
+</svg>
+</div>
+<figcaption>
+<span class="sc" style="font-size:17px;letter-spacing:.08em">Fig. I. — A Sitting in the Parlour of Madame Vesper</span>
+<span style="font-style:italic;font-size:16px">a. Mme. Vesper, medium · b. Col. Ashby · c. Miss Prudence Hale · d. Mr. Wendell Marsh, a sceptic</span>
+<span id="status" aria-live="polite" style="font-size:17px;color:#6e1d1b;min-height:1.4em"></span>
+</figcaption>
+</figure>
+
+<section class="panel">
+
+<div id="v-idle" class="stack fadein" style="gap:14px">
+<h2 class="sc" style="font-size:28px">Whom Shall We Summon?</h2>
+<p style="font-size:17px;line-height:1.5">Join hands, if you please. Madame Vesper will open the circle to one soul at a time. Choose with care; not all of them are glad to be called.</p>
+<div id="spirit-list" class="stack" style="gap:14px"></div>
+</div>
+
+<div id="v-summoning" class="stack fadein" style="gap:12px;text-align:center;padding:24px 0" hidden>
+<p class="sc" style="font-size:24px">The Circle Is Opening</p>
+<p style="font-style:italic;font-size:18px;line-height:1.5">Madame Vesper’s eyes roll back. The candle gutters. In a voice not quite her own she calls for <span class="js-spirit-name"></span>…</p>
+</div>
+
+<div id="v-connected" class="stack" style="gap:16px" hidden>
+<div class="stack fadein" style="gap:6px;border-bottom:1px solid #2b2118;padding-bottom:14px">
+<p class="kicker">In Communion With</p>
+<h2 class="sc js-spirit-name" style="font-size:28px"></h2>
+<p id="greeting" style="font-style:italic;font-size:17px;line-height:1.45"></p>
+</div>
+
+<form id="ask-form" class="stack" style="gap:10px">
+<label for="spirit-q" style="font-size:17px">Put your question to the spirit</label>
+<input id="spirit-q" type="text" autocomplete="off" placeholder="Shall I find what I have lost?">
+<div style="display:flex;flex-wrap:wrap;gap:10px">
+<button id="ask-btn" type="submit" class="ask">Ask the Spirit</button>
+<button id="close-btn" type="button" class="close">Close the Circle</button>
+</div>
+</form>
+
+<div id="answer" class="stack fadein" style="gap:10px;background:#efe4cc;border:1px solid #2b2118;padding:16px" hidden>
+<p class="kicker">The Sign</p>
+<h3 id="a-title" class="sc" style="font-size:23px;line-height:1.2"></h3>
+<p id="a-desc" style="font-size:17px;line-height:1.45"></p>
+<p id="a-letters" class="sc" style="text-align:center;font-size:30px;letter-spacing:.12em;padding:8px 0;border-top:1px dashed #2b2118;border-bottom:1px dashed #2b2118" hidden></p>
+<p id="a-slate" style="padding:14px 16px;background:#2f2f2b;color:#e8e4d8;font-style:italic;font-size:22px;text-align:center;border:6px solid #6b4a2b;transform:rotate(-1deg)" hidden></p>
+<p style="font-style:italic;font-size:18px;line-height:1.5;padding-top:6px">Madame Vesper translates: “<span id="a-interp"></span>”</p>
+<p id="a-reaction" style="font-size:15px;line-height:1.4;color:#4a3a2c"></p>
+</div>
+</div>
+
+<div id="v-log" class="stack" style="gap:10px;border-top:4px double #2b2118;padding-top:14px" hidden>
+<h3 class="sc" style="font-size:20px">Minutes of the Sitting</h3>
+<ol id="log" style="margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.4"></ol>
+</div>
+
+<p style="font-size:13px;line-height:1.4;color:#4a3a2c;text-align:center">The management accepts no responsibility for messages received, nor for spirits that decline to leave.</p>
+</section>
+</div>
+</div>
+</div>
+
+<script>
+(function () {
+var SPIRITS = [
+  { id: 'thorne', name: 'Captain Elias Thorne', epitaph: 'Master of the brig Persephone, lost off Finisterre, 1851', greeting: 'A smell of brine fills the parlour, and the floorboards creak like a deck in a swell. The Captain is with us.' },
+  { id: 'blackwood', name: 'Mrs. Honoria Blackwood', epitaph: 'Widow of Mayfair, departed under circumstances never satisfactorily explained, 1868', greeting: 'A rustle of black silk where no one stands. Mrs. Blackwood has come, and she is not pleased to be disturbed.' },
+  { id: 'fennimore', name: 'Mr. Augustus Fennimore', epitaph: 'Clockmaker of Clerkenwell, who swore he would return precisely on time, 1839', greeting: 'Every clock in the house has stopped at a quarter past nine. Mr. Fennimore is here.' },
+  { id: 'any', name: 'Whosoever Lingers', epitaph: 'Any soul abiding near the veil this evening. Unadvisable.', greeting: 'Something has answered. It does not give its name, and Miss Hale would rather it didn’t.' }
+];
+var SIGNS = [
+  { effect: 'knock', title: 'Three Raps upon the Table', desc: 'Distinct and unhurried. Mr. Marsh insists he counted only two, and an echo.' },
+  { effect: 'knock', title: 'A Single Rap, Then Silence', desc: 'One knock, from beneath the table, or perhaps from within it.' },
+  { effect: 'flame', title: 'The Candle Gutters and Bows', desc: 'The flame leans hard toward the east, shrinks to a bead, then rights itself as if nothing had occurred.' },
+  { effect: 'tilt', title: 'The Table Rises upon One Leg', desc: 'It lifts slowly toward Miss Hale, hangs there a moment, and settles again with a sigh of old wood.' },
+  { effect: 'bell', title: 'The Little Bell Rings Unbidden', desc: 'Not once but many times, quickly, the way one rings for a servant who is late.' },
+  { effect: 'chill', title: 'A Cold Breath Moves Through the Room', desc: 'A pale vapour gathers above the candle. Some see a face in it. Others see only smoke.' },
+  { effect: 'planchette', title: 'The Planchette Moves of Its Own Accord', desc: 'Beneath Madame Vesper’s fingertips it glides across the cloth, spelling:' },
+  { effect: 'writing', title: 'Words upon the Slate', desc: 'Madame Vesper’s hand moves without her. When the chalk falls still, the slate reads:' },
+  { effect: 'portrait', title: 'The Portrait Swings Askew', desc: 'The late Mr. Vesper, in oils above the mantel, turns his face a few degrees from the company.' }
+];
+var WORDS = ['NOT YET', 'ASK HER', 'EAST', 'BENEATH', 'YE…N', 'WAIT', 'THE BLUE ONE', 'FORGIVE', 'TWICE', 'GONE NORTH'];
+var SLATES = ['beneath the third stair', 'she knew all along', 'not the blue one', 'ask again at Michaelmas', 'the key was never lost', 'further than you think', 'both, and neither', 'you already opened it'];
+var INTERPS = [
+  'The spirit says yes. Or it says that you already know.',
+  'It is a matter of seasons. Not this one. Perhaps not the next.',
+  'There is a door in your question. The spirit will not say on which side it stands.',
+  'Beware what is lost, and what is found too easily.',
+  'The answer rests with a person whose name begins with a letter.',
+  'The spirit weeps, or laughs. At this distance the two are much alike.',
+  'Look to water. Or to the absence of it.',
+  'What was promised will be kept, though not in the form expected.',
+  'The veil is thick tonight. It says only: soon, and not as you think.',
+  'It is pleased with the question, and less pleased with the questioner.',
+  'Something must be returned before anything can be given.',
+  'The spirit points to the past, and then, I think, to the hallway.'
+];
+var REACTIONS = [
+  'Colonel Ashby harrumphs: “Remarkable. Quite remarkable.”',
+  'Miss Hale grips the Colonel’s hand and very nearly faints.',
+  'Mr. Marsh, the sceptic, peers beneath the tablecloth for wires.',
+  'Mr. Marsh mutters something about the draught from the chimney.',
+  'Miss Hale whispers that she felt a hand upon her shoulder.',
+  'The Colonel declares he saw a face in the smoke, and that it owed him money.',
+  'Mr. Marsh has gone rather quiet.',
+  'Miss Hale asks, very politely, whether the spirit might leave now.'
+];
+var STATUS = {
+  idle: 'The candle burns steady. The circle awaits.',
+  summoning: 'The candle gutters. Something draws near…',
+  open: 'The spirit is present. Speak plainly.',
+  answering: 'The room grows still. Hold fast to your neighbour’s hand…'
+};
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+function $(id) { return document.getElementById(id); }
+
+var state = { phase: 'idle', spiritId: null, effect: null, answer: null, log: [], lastSign: -1 };
+var timers = [];
+function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+
+// Spirit buttons
+SPIRITS.forEach(function (sp) {
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'spirit-btn';
+  var n = document.createElement('span');
+  n.className = 'sc'; n.style.fontSize = '20px'; n.textContent = sp.name;
+  var e = document.createElement('span');
+  e.style.cssText = 'font-style:italic;font-size:15px;line-height:1.35;color:#4a3a2c';
+  e.textContent = sp.epitaph;
+  b.appendChild(n); b.appendChild(e);
+  b.addEventListener('click', function () { summon(sp.id); });
+  $('spirit-list').appendChild(b);
+});
+
+function setFx(id, base, extra) {
+  var el = $(id);
+  var cls = base + (extra ? ' ' + extra : '');
+  if (el.getAttribute('class') === cls) return; // unchanged: don't restart its animation
+  el.setAttribute('class', base);
+  if (extra) { void el.getBoundingClientRect(); el.setAttribute('class', cls); }
+}
+
+function render() {
+  var s = state, phase = s.phase, fx = s.effect, answering = phase === 'answering';
+  var spirit = SPIRITS.find(function (x) { return x.id === s.spiritId; }) || null;
+
+  $('v-idle').hidden = phase !== 'idle';
+  $('v-summoning').hidden = phase !== 'summoning';
+  $('v-connected').hidden = !(phase === 'open' || answering);
+  $('status').textContent = STATUS[phase] || '';
+
+  document.querySelectorAll('.js-spirit-name').forEach(function (el) {
+    el.textContent = spirit ? spirit.name : 'the departed';
+  });
+  $('greeting').textContent = spirit ? spirit.greeting : '';
+
+  $('ask-btn').disabled = answering;
+  $('ask-btn').textContent = answering ? 'The Spirit Stirs…' : 'Ask the Spirit';
+  $('close-btn').disabled = answering;
+
+  var a = s.answer;
+  $('answer').hidden = !a || answering;
+  if (a) {
+    $('a-title').textContent = a.title;
+    $('a-desc').textContent = a.desc;
+    $('a-interp').textContent = a.interp;
+    $('a-reaction').textContent = a.reaction;
+    $('a-slate').hidden = !a.hasSlate;
+    $('a-slate').textContent = '“' + a.slate + '”';
+    var L = $('a-letters');
+    L.hidden = !a.hasLetters;
+    L.textContent = '';
+    a.word.split('').forEach(function (ch, i) {
+      var sp = document.createElement('span');
+      sp.className = 'letter';
+      sp.style.animationDelay = (i * 0.32) + 's';
+      sp.textContent = ch === ' ' ? ' ' : ch;
+      L.appendChild(sp);
+    });
+  }
+
+  $('v-log').hidden = s.log.length === 0;
+  var ol = $('log');
+  ol.textContent = '';
+  s.log.forEach(function (e) {
+    var li = document.createElement('li');
+    var q = document.createElement('span');
+    q.style.fontStyle = 'italic';
+    q.textContent = '“' + e.q + '”';
+    li.appendChild(q);
+    li.appendChild(document.createTextNode(' — ' + e.spirit + ' answered with ' + e.sign + '.'));
+    ol.appendChild(li);
+  });
+
+  var dimPlate = fx === 'summon' || answering;
+  $('fx-plate').className = 'frame plate' + (dimPlate ? ' dim' : '');
+  setFx('fx-glow', 'glow', (fx === 'summon' || fx === 'flame') ? 'dim' : '');
+  setFx('fx-flame', 'flame', (fx === 'summon' || fx === 'flame') ? 'gutter' : '');
+  setFx('fx-table', 'tbl', fx === 'tilt' ? 'tilt' : (fx === 'knock' ? 'knock' : ''));
+  setFx('fx-raps', 'raps', fx === 'knock' ? 'on' : '');
+  setFx('fx-bell', 'bell', fx === 'bell' ? 'ring' : '');
+  setFx('fx-mist', 'mist', (fx === 'chill' || fx === 'summon') ? 'on' : '');
+  setFx('fx-planch', 'planch', fx === 'planchette' ? 'move' : '');
+  setFx('fx-portrait', 'portrait', fx === 'portrait' ? 'swing' : '');
+}
+
+function setState(patch) {
+  Object.assign(state, patch);
+  render();
+}
+
+function summon(id) {
+  clearTimers();
+  $('spirit-q').value = '';
+  setState({ phase: 'summoning', spiritId: id, answer: null, effect: 'summon' });
+  later(function () {
+    setState({ phase: 'open', effect: null });
+    $('spirit-q').focus();
+  }, 2800);
+}
+
+function ask() {
+  var s = state, field = $('spirit-q');
+  if (s.phase !== 'open') return;
+  var q = field.value.trim();
+  if (!q) { field.focus(); return; }
+  var idx;
+  do { idx = Math.floor(Math.random() * SIGNS.length); } while (idx === s.lastSign);
+  var sign = SIGNS[idx];
+  var spirit = SPIRITS.find(function (x) { return x.id === s.spiritId; });
+  var answer = {
+    title: sign.title,
+    desc: sign.desc,
+    hasLetters: sign.effect === 'planchette',
+    word: pick(WORDS),
+    hasSlate: sign.effect === 'writing',
+    slate: pick(SLATES),
+    interp: pick(INTERPS),
+    reaction: pick(REACTIONS)
+  };
+  setState({ phase: 'answering', effect: sign.effect, answer: null, lastSign: idx });
+  later(function () {
+    field.value = '';
+    setState({
+      phase: 'open',
+      answer: answer,
+      log: [{ q: q, spirit: spirit ? spirit.name : 'The spirit', sign: sign.title.charAt(0).toLowerCase() + sign.title.slice(1) }].concat(state.log).slice(0, 8)
+    });
+  }, 2900);
+  later(function () { if (state.phase !== 'answering') setState({ effect: null }); }, 4400);
+}
+
+function release() {
+  clearTimers();
+  $('spirit-q').value = '';
+  setState({ phase: 'idle', spiritId: null, answer: null, effect: null });
+}
+
+$('ask-form').addEventListener('submit', function (e) { e.preventDefault(); ask(); });
+$('close-btn').addEventListener('click', release);
+
+render();
+})();
+</script>
+</body>
+</html>
