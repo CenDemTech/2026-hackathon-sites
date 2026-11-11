@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clark's Closet Dash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&amp;family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #2B1630; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+  a { color: #D63A79; } a:hover { color: #9E2457; }
+  button { font-family: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  button:focus-visible { outline: 3px solid #2B1630; outline-offset: 2px; }
+
+  /* The game is drawn at a fixed 1280x800 and scaled to fit the window. */
+  #fit { position: relative; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: 1280px; height: 800px; transform-origin: 0 0; }
+
+  #rotate { display: none; color: #FFF6F9; font: 700 14px 'DM Sans', system-ui, sans-serif; padding: 8px 16px; text-align: center; }
+  @media (orientation: portrait) and (max-width: 700px) { #rotate { display: block; } }
+
+  .clark { transition: left .1s linear, top .1s linear; }
+  .clark.moving img { animation: bob .28s ease-in-out infinite alternate; }
+  @keyframes bob { from { transform: translateY(0) rotate(-3deg); } to { transform: translateY(-6px) rotate(3deg); } }
+  .pulse { animation: pulse .9s ease-in-out infinite alternate; }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.07); } }
+  .garment { transition: transform .12s; }
+  .garment:hover { transform: translateY(3px); }
+</style>
+</head>
+<body>
+<div id="rotate">Turn your phone sideways for a bigger boutique.</div>
+<div id="fit"><div id="stage"></div></div>
+
+<script type="module">
+import { html, render, Component } from 'https://unpkg.com/htm@3.1.1/preact/standalone.module.js';
+
+// Swap this for a photo or drawing of the real Clark (e.g. 'clark.png').
+var CLARK = 'clark.svg';
+var ACCENT = '#D63A79';
+var SHIFT_SECONDS = 120;
+
+var TYPES = [
+  { id: 'top', label: 'Top', rack: 'Tops', d: 'M13 6l-8 5 3 7 4-2v18h16V16l4 2 3-7-8-5c-1 3-4 5-7 5s-6-2-7-5z' },
+  { id: 'skirt', label: 'Skirt', rack: 'Skirts', d: 'M12 6h16l1 5H11zM11 13h18l6 21H5z' },
+  { id: 'heels', label: 'Heels', rack: 'Heels', d: 'M3 25c7 0 11-4 15-11l3 1c2 6 7 9 13 10 2 0 3 2 3 4v3H22c-3 0-5-2-8-2H8v4H4z' },
+  { id: 'bag', label: 'Bag', rack: 'Bags', d: 'M14 14v-4a6 6 0 0 1 12 0v4h-3v-4a3 3 0 0 0-6 0v4zM7 15h26l-2 20H9z' }
+];
+var COLORS = [
+  { id: 'pink', label: 'Pink', hex: '#E2457F' },
+  { id: 'gold', label: 'Gold', hex: '#C99A2E' },
+  { id: 'noir', label: 'Noir', hex: '#241A20' }
+];
+var PERSONAS = [
+  { label: 'Influencer', decay: 6.2, pay: 1.5 },
+  { label: 'Socialite', decay: 4.4, pay: 1.25 },
+  { label: 'Tourist', decay: 3.1, pay: 1.0 }
+];
+var NAMES = ['Bijou', 'Coco', 'Duchess', 'Gigi', 'Pepper', 'Mochi', 'Biscuit', 'Lulu', 'Peaches', 'Noodle', 'Truffle', 'Pearl', 'Waffles', 'Rosie'];
+var AVATARS = ['#C9B6EE', '#9FDCCB', '#F7C3A1', '#AFCFF4', '#F5B8CF', '#EEDC91'];
+var GOALS = [450, 650, 850, 1050, 1300];
+var SPEED = 560;
+
+function typeOf(id) { for (var i = 0; i < TYPES.length; i++) if (TYPES[i].id === id) return TYPES[i]; return TYPES[0]; }
+function colorOf(id) { for (var i = 0; i < COLORS.length; i++) if (COLORS[i].id === id) return COLORS[i]; return COLORS[0]; }
+function pick(a) { return a[Math.floor(Math.random() * a.length)]; }
+function clamp(v) { return Math.max(0, Math.min(5, v)); }
+function barColor(p) { return p > 60 ? '#2E9E6E' : (p > 30 ? '#D9A21B' : '#C8264B'); }
+function rankFor(f) { return f >= 4.5 ? 'Style Icon' : f >= 3.5 ? 'A-List' : f >= 2.5 ? 'B-List' : f >= 1.5 ? 'C-List' : 'Z-List'; }
+
+var STAR = 'M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z';
+var STAT = 'padding: 10px; border-radius: 12px; background: #3D2244';
+var STAT_LABEL = 'font-size: 11px; color: #E9C877; text-transform: uppercase; letter-spacing: 1px';
+var END_BOX = 'padding: 12px 18px; border-radius: 14px; background: #FFFFFF; border: 2px solid #EBD3DD';
+var END_LABEL = 'font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #6B4F68';
+
+function garmentSvg(d, hex, size, label) {
+  return html`<svg viewBox="0 0 40 40" width=${size} height=${size} role=${label ? 'img' : null} aria-label=${label || null} aria-hidden=${label ? null : 'true'}><path d=${d} fill=${hex} stroke="#FFFFFF" stroke-width="1"></path></svg>`;
+}
+
+class Game extends Component {
+  componentDidMount() {
+    var self = this;
+    this.timer = setInterval(function () { self.tick(); }, 100);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+
+  makeGame(level, screen) {
+    var n = level >= 3 ? 4 : 3;
+    var rooms = [];
+    for (var i = 0; i < n; i++) rooms.push({ state: 'empty', client: null, need: [], t: 0 });
+    return {
+      screen: screen, level: level, time: SHIFT_SECONDS, goal: GOALS[level - 1], money: 0, fame: 3,
+      rooms: rooms, queue: [], selectedQ: null, bag: [], cx: 620, cy: 480, actions: [], moving: null,
+      spawnT: 0.8, spawnEvery: Math.max(4.2, 9 - (level - 1) * 1.2), floaters: [], combo: 1, lastCollect: -99,
+      served: 0, walkouts: 0, paused: false, last: Date.now(), clock: 0, seq: 1,
+      items: level >= 3 ? 3 : 2, buzz: 'Doors are open. Seat your first guest!'
+    };
+  }
+
+  roomX(i) { var n = this.g.rooms.length; return 240 + (4 - n) * 95 + i * 190; }
+  rackX(i) { return 240 + i * 190; }
+
+  makeClient() {
+    var g = this.g;
+    var p = g.level === 1 ? pick([PERSONAS[1], PERSONAS[2], PERSONAS[2]]) : pick(PERSONAS);
+    return { id: g.seq++, name: pick(NAMES), persona: p, color: pick(AVATARS), patience: 100 };
+  }
+
+  makeNeed() {
+    var t = TYPES.slice().sort(function () { return Math.random() - 0.5; });
+    var out = [];
+    for (var i = 0; i < this.g.items; i++) out.push({ type: t[i].id, color: pick(COLORS).id, got: false });
+    return out;
+  }
+
+  float(x, y, text, color) {
+    this.g.floaters.push({ id: this.g.seq++, x: x, y: y, text: text, color: color || '#2B1630', age: 0 });
+  }
+
+  enqueue(a) {
+    var g = this.g;
+    if (g.screen !== 'play' || g.paused) return;
+    if (g.actions.length >= 6) { this.float(g.cx, g.cy - 60, 'Too many errands!', '#C8264B'); return; }
+    g.actions.push(a);
+    this.forceUpdate();
+  }
+
+  clickRoom(i) {
+    var g = this.g;
+    if (g.screen !== 'play' || g.paused) return;
+    var r = g.rooms[i];
+    if (r.state === 'empty') {
+      var idx = 0;
+      if (g.selectedQ !== null) {
+        for (var k = 0; k < g.queue.length; k++) if (g.queue[k].id === g.selectedQ) idx = k;
+      }
+      var c = g.queue[idx];
+      if (!c) { this.float(this.roomX(i) + 85, 200, 'No one in line', '#6B4F68'); this.forceUpdate(); return; }
+      g.queue.splice(idx, 1);
+      c.patience = Math.min(100, c.patience + 20);
+      r.client = c; r.state = 'browsing'; r.t = 2.2; r.need = this.makeNeed();
+      g.selectedQ = null;
+      g.buzz = c.name + ' the ' + c.persona.label.toLowerCase() + ' is browsing Suite ' + (i + 1) + '.';
+      this.forceUpdate();
+      return;
+    }
+    this.enqueue({ kind: 'room', idx: i, x: this.roomX(i) + 85, y: 452 });
+  }
+
+  clickRack(t, c) {
+    this.enqueue({ kind: 'rack', type: t, color: c, x: this.rackX(TYPES.indexOf(typeOf(t))) + 85, y: 520 });
+  }
+
+  arrive(a) {
+    var g = this.g;
+    if (a.kind === 'rack') {
+      var lbl = colorOf(a.color).label + ' ' + typeOf(a.type).label;
+      if (g.bag.length >= 3) this.float(a.x, a.y - 70, "Bag's full!", '#C8264B');
+      else { g.bag.push({ type: a.type, color: a.color }); this.float(a.x, a.y - 70, '+ ' + lbl, '#9E2457'); }
+      return;
+    }
+    if (a.kind === 'donate') {
+      if (g.bag.length) { g.bag = []; this.float(a.x, a.y - 70, 'Donated!', '#2E9E6E'); }
+      return;
+    }
+    var r = g.rooms[a.idx];
+    var fx = this.roomX(a.idx) + 85;
+    if (r.state === 'waiting') {
+      var given = 0;
+      for (var i = 0; i < r.need.length; i++) {
+        var n = r.need[i];
+        if (n.got) continue;
+        for (var j = 0; j < g.bag.length; j++) {
+          if (g.bag[j].type === n.type && g.bag[j].color === n.color) { g.bag.splice(j, 1); n.got = true; given++; break; }
+        }
+      }
+      if (given) {
+        r.client.patience = Math.min(100, r.client.patience + 12 * given);
+        var done = r.need.every(function (x) { return x.got; });
+        if (done) { r.state = 'trying'; r.t = 2.4; this.float(fx, 120, 'Obsessed!', '#9E2457'); }
+        else this.float(fx, 120, 'Yes, that one!', '#9E2457');
+      } else this.float(fx, 120, 'Not my style', '#6B4F68');
+    } else if (r.state === 'pay') {
+      var base = r.need.length * 45;
+      var tip = Math.round(r.client.patience / 100 * 35);
+      var amt = Math.round((base + tip) * r.client.persona.pay);
+      if (g.clock - g.lastCollect < 6) g.combo++; else g.combo = 1;
+      g.lastCollect = g.clock;
+      var bonus = (g.combo - 1) * 15;
+      g.money += amt + bonus;
+      g.fame = clamp(g.fame + (r.client.patience >= 60 ? 0.3 : 0.1));
+      g.served++;
+      this.float(fx, 120, '+$' + (amt + bonus) + (bonus ? '  combo x' + g.combo : ''), '#7A5410');
+      g.buzz = r.client.name + ' left in head-to-toe ' + colorOf(r.need[0].color).label.toLowerCase() + '. The blogs are buzzing.';
+      r.state = 'empty'; r.client = null; r.need = [];
+    } else if (r.state === 'browsing') {
+      this.float(fx, 120, 'Still browsing…', '#6B4F68');
+    }
+  }
+
+  tick() {
+    var g = this.g;
+    if (!g || g.screen !== 'play' || g.paused) return;
+    var now = Date.now();
+    var dt = Math.min(0.5, (now - g.last) / 1000);
+    g.last = now; g.clock += dt;
+    g.time -= dt;
+    if (g.time <= 0) { g.time = 0; g.screen = 'end'; this.forceUpdate(); return; }
+
+    g.spawnT -= dt;
+    if (g.spawnT <= 0) {
+      if (g.queue.length < 5) g.queue.push(this.makeClient());
+      g.spawnT = g.spawnEvery * (0.75 + Math.random() * 0.5);
+    }
+
+    var self = this;
+    g.queue = g.queue.filter(function (c, i) {
+      c.patience -= 2 * (c.persona.decay / 4) * dt;
+      if (c.patience <= 0) {
+        g.fame = clamp(g.fame - 0.25); g.walkouts++;
+        self.float(115, 200 + i * 80, c.name + ' left the line', '#C8264B');
+        if (g.selectedQ === c.id) g.selectedQ = null;
+        return false;
+      }
+      return true;
+    });
+
+    for (var i = 0; i < g.rooms.length; i++) {
+      var r = g.rooms[i];
+      if (!r.client) continue;
+      r.t -= dt;
+      if (r.state === 'browsing' && r.t <= 0) r.state = 'waiting';
+      else if (r.state === 'trying' && r.t <= 0) r.state = 'pay';
+      if (r.state === 'waiting') r.client.patience -= r.client.persona.decay * dt;
+      if (r.state === 'pay') r.client.patience -= r.client.persona.decay * 0.7 * dt;
+      if (r.client.patience <= 0) {
+        g.fame = clamp(g.fame - 0.5); g.walkouts++;
+        this.float(this.roomX(i) + 85, 120, r.client.name + ' stormed out!', '#C8264B');
+        g.buzz = 'Ouch. ' + r.client.name + ' is posting a bad review.';
+        r.state = 'empty'; r.client = null; r.need = [];
+      }
+    }
+
+    if (!g.moving && g.actions.length) g.moving = g.actions.shift();
+    if (g.moving) {
+      var m = g.moving, dx = m.x - g.cx, dy = m.y - g.cy, d = Math.hypot(dx, dy), step = SPEED * dt;
+      if (d <= step) { g.cx = m.x; g.cy = m.y; g.moving = null; this.arrive(m); }
+      else { g.cx += dx / d * step; g.cy += dy / d * step; }
+    }
+
+    g.floaters = g.floaters.filter(function (f) { f.age += dt; return f.age < 1.3; });
+    this.forceUpdate();
+  }
+
+  render() {
+    var self = this;
+    if (!this.g) this.g = this.makeGame(1, 'title');
+    var g = this.g;
+    var accent = ACCENT;
+    var hasQueue = g.queue.length > 0;
+    var plan = (g.moving ? [g.moving] : []).concat(g.actions);
+    var secs = Math.ceil(g.time);
+    var clock = Math.floor(secs / 60) + ':' + ('0' + (secs % 60)).slice(-2);
+    var passed = g.money >= g.goal;
+    var lastLevel = g.level >= GOALS.length;
+    var rank = rankFor(g.fame);
+    var isPaused = g.screen === 'play' && g.paused;
+
+    function togglePause() {
+      if (g.screen !== 'play') return;
+      g.paused = !g.paused; g.last = Date.now(); self.forceUpdate();
+    }
+    function startLevel(level) { self.g = self.makeGame(level, 'play'); self.forceUpdate(); }
+
+    var nextName = g.selectedQ !== null
+      ? (g.queue.filter(function (q) { return q.id === g.selectedQ; })[0] || {}).name
+      : (g.queue[0] || {}).name;
+
+    var header = html`
+      <div style="position: absolute; left: 0; top: 0; width: 1280px; height: 76px; box-sizing: border-box; padding: 0 24px; display: flex; align-items: center; gap: 24px; background: #2B1630; color: #FFF6F9; border-bottom: 4px solid #C99A2E">
+        <div style="display: flex; align-items: baseline; gap: 10px; flex-grow: 1">
+          <h1 style="margin: 0; font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 30px; letter-spacing: 0.3px">Clark's Closet Dash</h1>
+          <div style="font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #E9C877">Boutique · Hollywood</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 4px; width: 220px">
+          <div style="display: flex; justify-content: space-between; font-size: 13px"><span>Level ${g.level} earnings</span><span style="font-weight: 700">$${g.money} / $${g.goal}</span></div>
+          <div style="height: 10px; border-radius: 6px; background: #4A2B50; overflow: hidden"><div style=${'height: 10px; border-radius: 6px; background: ' + accent + '; width: ' + Math.min(100, g.money / g.goal * 100) + '%'}></div></div>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+          <div style="display: flex; gap: 2px" role="img" aria-label=${'Fame: ' + rank}>
+            ${[0, 1, 2, 3, 4].map(function (i) {
+              return html`<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" style=${'color:' + (g.fame >= i + 0.75 ? '#E9C877' : '#5A3D60')}><path d=${STAR} fill="currentColor"></path></svg>`;
+            })}
+          </div>
+          <div style="font-size: 12px; color: #E9C877; font-weight: 700; letter-spacing: 1px; text-transform: uppercase">${rank}</div>
+        </div>
+        <div style="font-family: 'Playfair Display', serif; font-size: 30px; font-weight: 700; width: 88px; text-align: center" aria-label="Time left">${clock}</div>
+        <button onClick=${togglePause} style="height: 44px; padding: 0 18px; border-radius: 22px; border: 2px solid #E9C877; background: transparent; color: #FFF6F9; font-size: 15px; font-weight: 700">${g.paused ? 'Resume' : 'Pause'}</button>
+      </div>`;
+
+    var queuePanel = html`
+      <div style="position: absolute; left: 20px; top: 96px; width: 190px; height: 684px; box-sizing: border-box; padding: 14px 10px; border-radius: 18px; background: #FFFFFF; border: 2px solid #EBD3DD; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <div style="width: 10px; height: 10px; border-radius: 50%; background: #C99A2E"></div>
+          <div style="font-family: 'Playfair Display', serif; font-weight: 700; font-size: 19px">Velvet Rope</div>
+        </div>
+        <div style="font-size: 12px; color: #6B4F68; line-height: 1.35">Tap a guest, then an open suite. Or just tap a suite to seat whoever's first.</div>
+        ${g.queue.map(function (c) {
+          var sel = g.selectedQ === c.id;
+          return html`
+            <button key=${c.id} onClick=${function () { g.selectedQ = sel ? null : c.id; self.forceUpdate(); }} aria-label=${'Select ' + c.name + ', ' + c.persona.label} aria-pressed=${sel ? 'true' : 'false'}
+              style=${'display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 14px; background: #FFF8FA; border: 2px solid #EBD3DD; text-align: left; color: #2B1630;' + (sel ? 'border-color:' + accent + ';box-shadow:0 0 0 3px ' + accent + '40' : '')}>
+              <div style=${"width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 20px; color: #2B1630; background:" + c.color}>${c.name.charAt(0)}</div>
+              <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1; min-width: 0">
+                <div style="font-weight: 700; font-size: 14px">${c.name}</div>
+                <div style="font-size: 11px; color: #6B4F68">${c.persona.label}</div>
+                <div style="height: 6px; border-radius: 4px; background: #F1DCE5; overflow: hidden"><div style=${'height: 6px; width:' + Math.max(0, c.patience) + '%;background:' + barColor(c.patience)}></div></div>
+              </div>
+            </button>`;
+        })}
+        ${!hasQueue && html`<div style="margin-top: 24px; text-align: center; font-size: 13px; color: #6B4F68">No one in line yet.<br />The paparazzi are on their way.</div>`}
+      </div>`;
+
+    var rooms = g.rooms.map(function (r, i) {
+      var c = r.client;
+      var occ = !!c;
+      var border = (!occ && hasQueue && g.screen === 'play') ? '3px dashed ' + accent : (r.state === 'pay' ? '3px solid ' + accent : '2px solid #EBD3DD');
+      return html`
+        <button key=${'room' + i} onClick=${function () { self.clickRoom(i); }} aria-label=${occ ? 'Suite ' + (i + 1) + ': ' + c.name + ', ' + r.state : 'Suite ' + (i + 1) + ', open'}
+          style=${'position: absolute; width: 170px; height: 300px; padding: 0; box-sizing: border-box; border-radius: 18px; overflow: hidden; background: #FFFFFF; display: flex; flex-direction: column; color: #2B1630; text-align: center; left:' + self.roomX(i) + 'px; top: 100px; border:' + border}>
+          <div style="height: 36px; width: 100%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #2B1630; color: #FFF6F9; font-family: 'Playfair Display', serif; font-style: italic; font-size: 16px; border-bottom: 3px solid #C99A2E">Suite ${i + 1}</div>
+          <div style="flex-grow: 1; width: 100%; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px">
+            ${!occ && html`
+              <div style="margin-top: 40px; width: 72px; height: 72px; border-radius: 50%; border: 2px dashed #D9B9C7; display: flex; align-items: center; justify-content: center">
+                <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" fill="none" stroke="#B88EA0" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+              </div>
+              <div style="font-weight: 700; font-size: 15px">Open suite</div>
+              <div style="font-size: 12px; color: #6B4F68; line-height: 1.35">${hasQueue ? 'Tap to seat ' + nextName : 'Waiting for guests'}</div>`}
+            ${occ && html`
+              <div style=${"width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 28px; color: #2B1630; border: 3px solid #C99A2E; background:" + c.color}>${c.name.charAt(0)}</div>
+              <div style="display: flex; flex-direction: column; gap: 1px">
+                <div style="font-weight: 700; font-size: 15px">${c.name}</div>
+                <div style="font-size: 11px; color: #6B4F68">${c.persona.label}</div>
+              </div>
+              <div style="width: 120px; height: 8px; border-radius: 4px; background: #F1DCE5; overflow: hidden"><div style=${'height: 8px; width:' + Math.max(0, c.patience) + '%;background:' + barColor(c.patience)}></div></div>
+              ${r.state === 'browsing' && html`<div style="margin-top: 10px; font-size: 13px; font-style: italic; color: #6B4F68">Browsing the racks…</div>`}
+              ${r.state === 'waiting' && html`
+                <div style="margin-top: 4px; padding: 8px; border-radius: 14px; background: #FFF2F6; border: 2px solid #F0C9D8; display: flex; flex-direction: column; gap: 6px; align-items: center">
+                  <div style="font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #6B4F68">Wants</div>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: center">
+                    ${r.need.map(function (n) {
+                      var t = typeOf(n.type), col = colorOf(n.color);
+                      var label = col.label + ' ' + t.label + (n.got ? ' (delivered)' : '');
+                      return html`<div title=${label} style=${'width: 40px; height: 40px; border-radius: 10px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; box-sizing: border-box;' + (n.got ? 'opacity:0.35;border:2px solid #2E9E6E' : 'border:2px solid #EBD3DD')}>${garmentSvg(t.d, col.hex, 30, label)}</div>`;
+                    })}
+                  </div>
+                </div>`}
+              ${r.state === 'trying' && html`
+                <div style="margin-top: 10px; font-size: 14px; font-weight: 700; color: #9E2457">Trying it on ✦</div>
+                <div style="font-size: 12px; color: #6B4F68">Strike a pose…</div>`}
+              ${r.state === 'pay' && html`<div class="pulse" style=${'margin-top: 10px; padding: 8px 14px; border-radius: 20px; color: #FFFFFF; font-weight: 700; font-size: 14px; background:' + accent}>$ Ready to pay</div>`}`}
+          </div>
+        </button>`;
+    });
+
+    var racks = TYPES.map(function (t, i) {
+      return html`
+        <div key=${'rack' + i} style=${'position: absolute; top: 566px; width: 170px; height: 214px; box-sizing: border-box; border-radius: 18px; background: #FFFFFF; border: 2px solid #EBD3DD; padding: 12px 10px; display: flex; flex-direction: column; gap: 8px; left:' + self.rackX(i) + 'px'}>
+          <div style="font-family: 'Playfair Display', serif; font-weight: 700; font-size: 18px; text-align: center">${t.rack}</div>
+          <div style="height: 4px; border-radius: 2px; background: #C99A2E; margin: 0 4px"></div>
+          <div style="display: flex; justify-content: space-between; gap: 4px">
+            ${COLORS.map(function (c) {
+              return html`
+                <button class="garment" onClick=${function () { self.clickRack(t.id, c.id); }} aria-label=${'Grab ' + c.label + ' ' + t.label} style="width: 46px; height: 120px; padding: 6px 0 0; border: none; border-radius: 0 0 12px 12px; background: #FFF2F6; display: flex; flex-direction: column; align-items: center; gap: 6px">
+                  <svg viewBox="0 0 40 40" width="14" height="14" aria-hidden="true" fill="none" stroke="#7A5410" stroke-width="3" stroke-linecap="round"><path d="M20 4v10M20 14L6 30h28z"></path></svg>
+                  ${garmentSvg(t.d, c.hex, 40, null)}
+                  <div style="font-size: 10px; font-weight: 700; color: #4A2B50">${c.label}</div>
+                </button>`;
+            })}
+          </div>
+        </div>`;
+    });
+
+    var bagPanel = html`
+      <div style="position: absolute; left: 1030px; top: 96px; width: 230px; height: 300px; box-sizing: border-box; padding: 16px; border-radius: 18px; background: #FFFFFF; border: 2px solid #EBD3DD; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <img src=${CLARK} alt="Clark" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; background: #FCE4EC; border: 3px solid #C99A2E" />
+          <div>
+            <div style="font-family: 'Playfair Display', serif; font-weight: 700; font-size: 19px">Clark's Bag</div>
+            <div style="font-size: 12px; color: #6B4F68">Carries 3 pieces</div>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+          ${[0, 1, 2].map(function (i) {
+            var b = g.bag[i];
+            if (!b) return html`<div style="height: 60px; border-radius: 12px; border: 2px dashed #E3CFD8; background: #FFF8FA"></div>`;
+            var t = typeOf(b.type), c = colorOf(b.color);
+            return html`<div style="height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; border: 2px solid #EBD3DD; background: #FFF2F6">${garmentSvg(t.d, c.hex, 40, c.label + ' ' + t.label)}</div>`;
+          })}
+        </div>
+        <div style="font-size: 12px; color: #6B4F68; line-height: 1.4">Grab pieces from the racks, then tap a suite to hand over what that guest wants. Gold numbers show Clark's to-do route.</div>
+        <button onClick=${function () { self.enqueue({ kind: 'donate', x: 990, y: 300 }); }} style="margin-top: auto; height: 44px; border-radius: 12px; border: 2px dashed #B88EA0; background: #FFF8FA; color: #4A2B50; font-weight: 700; font-size: 14px">Donate bag (clear it)</button>
+      </div>`;
+
+    var buzzPanel = html`
+      <div style="position: absolute; left: 1030px; top: 416px; width: 230px; height: 364px; box-sizing: border-box; padding: 16px; border-radius: 18px; background: #2B1630; color: #FFF6F9; display: flex; flex-direction: column; gap: 14px">
+        <div style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 20px">Tonight's Buzz</div>
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+          <div style=${STAT}><div style=${STAT_LABEL}>Styled</div><div style="font-size: 26px; font-weight: 700">${g.served}</div></div>
+          <div style=${STAT}><div style=${STAT_LABEL}>Walkouts</div><div style="font-size: 26px; font-weight: 700">${g.walkouts}</div></div>
+          <div style=${STAT}><div style=${STAT_LABEL}>Combo</div><div style="font-size: 26px; font-weight: 700">x${g.combo}</div></div>
+          <div style=${STAT}><div style=${STAT_LABEL}>To-do</div><div style="font-size: 26px; font-weight: 700">${plan.length}</div></div>
+        </div>
+        <div style="font-size: 13px; line-height: 1.45; color: #F3DDE7" aria-live="polite">${g.buzz}</div>
+      </div>`;
+
+    var pins = plan.map(function (a, i) {
+      return html`<div style=${'position: absolute; width: 24px; height: 24px; border-radius: 50%; background: #C99A2E; color: #2B1630; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #FFFFFF; pointer-events: none; left:' + (a.x + 26) + 'px; top:' + (a.y - 46) + 'px'}>${i + 1}</div>`;
+    });
+
+    var clarkSprite = html`
+      <div class=${'clark' + (g.moving ? ' moving' : '')} style=${'position: absolute; width: 76px; height: 96px; pointer-events: none; display: flex; flex-direction: column; align-items: center; left:' + (g.cx - 38) + 'px; top:' + (g.cy - 38) + 'px'}>
+        <img src=${CLARK} alt="Clark the dog" style="width: 76px; height: 76px; border-radius: 50%; object-fit: cover; background: #FCE4EC; border: 4px solid #C99A2E; box-sizing: border-box; box-shadow: 0 6px 14px rgba(43,22,48,0.3)" />
+        <div style=${'margin-top: -8px; padding: 2px 10px; border-radius: 10px; color: #FFFFFF; font-size: 12px; font-weight: 700; background:' + accent}>Clark${g.bag.length ? ' · ' + g.bag.length + '/3' : ''}</div>
+      </div>`;
+
+    var floaters = g.floaters.map(function (f) {
+      return html`<div key=${f.id} style=${'position: absolute; transform: translateX(-50%); white-space: nowrap; pointer-events: none; padding: 4px 10px; border-radius: 12px; background: #FFFFFF; font-weight: 700; font-size: 15px; box-shadow: 0 4px 10px rgba(43,22,48,0.18); left:' + f.x + 'px; top:' + (f.y - f.age * 45) + 'px; opacity:' + Math.max(0, 1 - f.age / 1.3) + '; color:' + f.color}>${f.text}</div>`;
+    });
+
+    var titleScreen = g.screen === 'title' && html`
+      <div style="position: absolute; inset: 0; background: rgba(43,22,48,0.78); display: flex; align-items: center; justify-content: center">
+        <div style="width: 760px; box-sizing: border-box; padding: 40px 48px; border-radius: 28px; background: #FFF8FA; border: 4px solid #C99A2E; display: flex; gap: 36px; align-items: center">
+          <img src=${CLARK} alt="Clark, a black and white dog with big upright ears" style="width: 210px; height: 210px; flex-shrink: 0; border-radius: 50%; object-fit: cover; background: #FCE4EC; border: 6px solid #C99A2E" />
+          <div style="display: flex; flex-direction: column; gap: 14px">
+            <div style="font-size: 12px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #9E2457">Now open on the Boulevard</div>
+            <div style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 46px; line-height: 1.02">Clark's Closet Dash</div>
+            <div style="font-size: 15px; color: #4A2B50; line-height: 1.5">Hollywood's most stylish shop dog runs the hottest boutique in town. Seat the A-listers, pull the looks, collect the cash, and climb from Z-List to Style Icon.</div>
+            <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; font-size: 13px; color: #2B1630">
+              <div><b style="color: #9E2457">1.</b> Tap a suite to seat a guest</div>
+              <div><b style="color: #9E2457">2.</b> Grab the pieces they want</div>
+              <div><b style="color: #9E2457">3.</b> Tap their suite to deliver</div>
+              <div><b style="color: #9E2457">4.</b> Tap again to collect $</div>
+            </div>
+            <button onClick=${function () { startLevel(g.level); }} style=${'align-self: flex-start; margin-top: 6px; height: 52px; padding: 0 32px; border-radius: 26px; border: none; color: #FFFFFF; font-size: 17px; font-weight: 700; background:' + accent}>Start Level ${g.level} shift</button>
+          </div>
+        </div>
+      </div>`;
+
+    var pauseScreen = isPaused && html`
+      <div style="position: absolute; left: 0; top: 76px; right: 0; bottom: 0; background: rgba(43,22,48,0.6); display: flex; align-items: center; justify-content: center">
+        <div style="padding: 32px 48px; border-radius: 24px; background: #FFF8FA; border: 4px solid #C99A2E; display: flex; flex-direction: column; align-items: center; gap: 14px">
+          <div style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 34px">Touch-up break</div>
+          <div style="font-size: 14px; color: #4A2B50">The guests are frozen mid-pose.</div>
+          <button onClick=${togglePause} style=${'height: 48px; padding: 0 28px; border-radius: 24px; border: none; color: #FFFFFF; font-size: 16px; font-weight: 700; background:' + accent}>Back to the floor</button>
+        </div>
+      </div>`;
+
+    var endScreen = g.screen === 'end' && html`
+      <div style="position: absolute; inset: 0; background: rgba(43,22,48,0.78); display: flex; align-items: center; justify-content: center">
+        <div style="width: 620px; box-sizing: border-box; padding: 36px 44px; border-radius: 28px; background: #FFF8FA; border: 4px solid #C99A2E; display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center">
+          <img src=${CLARK} alt="Clark" style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; background: #FCE4EC; border: 5px solid #C99A2E" />
+          <div style="font-family: 'Playfair Display', serif; font-style: italic; font-weight: 700; font-size: 38px">${passed ? (lastLevel ? 'Style Icon status' : 'Goal smashed!') : 'So close, darling'}</div>
+          <div style="font-size: 15px; color: #4A2B50; line-height: 1.5">${passed
+            ? (lastLevel ? 'Clark ran every level. The red carpet is officially his.' : 'Clark made $' + g.money + ' tonight. The paparazzi want more.')
+            : 'Clark needed $' + (g.goal - g.money) + ' more. Seat faster and chain checkouts for combo bonuses.'}</div>
+          <div style="display: flex; gap: 12px">
+            <div style=${END_BOX}><div style=${END_LABEL}>Earned</div><div style="font-size: 24px; font-weight: 700">$${g.money}</div></div>
+            <div style=${END_BOX}><div style=${END_LABEL}>Goal</div><div style="font-size: 24px; font-weight: 700">$${g.goal}</div></div>
+            <div style=${END_BOX}><div style=${END_LABEL}>Styled</div><div style="font-size: 24px; font-weight: 700">${g.served}</div></div>
+            <div style=${END_BOX}><div style=${END_LABEL}>Fame</div><div style="font-size: 24px; font-weight: 700">${rank}</div></div>
+          </div>
+          <div style="display: flex; gap: 12px; margin-top: 6px">
+            ${passed && !lastLevel && html`<button onClick=${function () { startLevel(Math.min(GOALS.length, g.level + 1)); }} style=${'height: 50px; padding: 0 28px; border-radius: 25px; border: none; color: #FFFFFF; font-size: 16px; font-weight: 700; background:' + accent}>Level ${g.level + 1}: ${g.level + 1 >= 3 ? 'Suite 4 opens' : 'Busier night'}</button>`}
+            <button onClick=${function () { startLevel(g.level); }} style="height: 50px; padding: 0 24px; border-radius: 25px; border: 2px solid #2B1630; background: transparent; color: #2B1630; font-size: 16px; font-weight: 700">Replay level ${g.level}</button>
+          </div>
+        </div>
+      </div>`;
+
+    return html`
+      <main style="width: 1280px; height: 800px; position: relative; overflow: hidden; font-family: 'DM Sans', system-ui, sans-serif; color: #2B1630; background-color: #FBEFF3; background-image: repeating-conic-gradient(#F6E1E9 0% 25%, #FBEFF3 0% 50%); background-size: 64px 64px">
+        ${header}${queuePanel}${rooms}${racks}${bagPanel}${buzzPanel}${pins}${clarkSprite}${floaters}${titleScreen}${pauseScreen}${endScreen}
+      </main>`;
+  }
+}
+
+// Scale the fixed 1280x800 boutique to fit whatever screen it's on.
+var fitEl = document.getElementById('fit');
+var stage = document.getElementById('stage');
+var hint = document.getElementById('rotate');
+function fit() {
+  var availH = window.innerHeight - (hint.offsetHeight || 0);
+  var s = Math.min(window.innerWidth / 1280, availH / 800);
+  stage.style.transform = 'scale(' + s + ')';
+  fitEl.style.width = Math.floor(1280 * s) + 'px';
+  fitEl.style.height = Math.floor(800 * s) + 'px';
+}
+window.addEventListener('resize', fit);
+fit();
+
+render(html`<${Game} />`, stage);
+</script>
+</body>
+</html>
