@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crowdpleaser – Add your music</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&amp;family=Inter:wght@400;500;600&amp;display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="wrap site-header">
+  <a class="logo" href="index.html">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF7A59" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"></rect><path d="M5 10a7 7 0 0 0 14 0"></path><path d="M12 17v5"></path><path d="M8 22h8"></path></svg>
+    Crowdpleaser
+  </a>
+  <p class="muted" style="font-size: 14px">Joining <strong style="color: #F4F1EA">Friday at Lucky Star</strong> · room KX4P</p>
+</header>
+
+<main class="wrap connect-main">
+  <div style="display: flex; flex-direction: column; gap: 14px; max-width: 680px">
+    <p class="eyebrow">Step 2 of 3</p>
+    <h1 class="display" style="font-weight: 800; font-size: clamp(40px, 5vw, 64px); line-height: 1; letter-spacing: -0.035em">Add your music to the room</h1>
+    <p class="soft" style="font-size: 18px; line-height: 1.6">Pick whichever feels right. The room only ever sees which songs you have in common.</p>
+  </div>
+
+  <div class="connect-grid">
+    <section class="card opt-main" aria-labelledby="opt-link">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+        <h2 id="opt-link" class="display" style="font-weight: 700; font-size: 26px; letter-spacing: 0">Link your streaming service</h2>
+        <span class="badge">Best matches</span>
+      </div>
+
+      <div class="services" role="radiogroup" aria-label="Streaming service">
+        <button type="button" class="chip" role="radio" aria-checked="true">Spotify</button>
+        <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1">Apple Music</button>
+        <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1">YouTube Music</button>
+        <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1">Tidal</button>
+        <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1">Deezer</button>
+        <button type="button" class="chip" role="radio" aria-checked="false" tabindex="-1">Amazon Music</button>
+      </div>
+
+      <p class="soft" style="font-size: 16px; line-height: 1.6">You'll sign in on <span data-service>Spotify</span>'s own page. We never see your password.</p>
+
+      <div class="checks">
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <p style="font-size: 14px; font-weight: 600; color: #7FD1C7">We'll read</p>
+          <ul class="plain-list">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7FD1C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Your library or top songs</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7FD1C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"></path></svg>Your saved playlists</li>
+          </ul>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <p style="font-size: 14px; font-weight: 600; color: #FFB4A1">We'll never</p>
+          <ul class="plain-list">
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFB4A1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>Post, follow or change playlists</li>
+            <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFB4A1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>Show friends what you listen to</li>
+          </ul>
+        </div>
+      </div>
+
+      <a class="btn btn-primary" href="room.html" style="align-self: flex-start">Continue with&nbsp;<span data-service>Spotify</span></a>
+      <p class="muted" style="font-size: 13px; line-height: 1.5">Unlink anytime from the room or your service's settings. Your data leaves the room when you do.</p>
+    </section>
+
+    <div class="opt-side">
+      <section class="card" aria-labelledby="opt-playlist">
+        <h2 id="opt-playlist" class="display" style="font-weight: 700; font-size: 22px; letter-spacing: 0">Paste a playlist</h2>
+        <p class="soft" style="font-size: 15px; line-height: 1.55">A public playlist link from any supported service. No sign-in.</p>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <label for="playlist-url" style="font-size: 14px; font-weight: 600">Playlist link</label>
+          <input id="playlist-url" type="url" placeholder="Paste a share link">
+        </div>
+        <a class="btn btn-ghost btn-sm" href="room.html" style="align-self: flex-start">Add playlist</a>
+      </section>
+
+      <section class="opt-skip" aria-labelledby="opt-skip">
+        <h2 id="opt-skip" class="display" style="font-weight: 700; font-size: 22px; letter-spacing: 0">Just the classics</h2>
+        <p class="soft" style="font-size: 15px; line-height: 1.55">Join without adding anything. You'll still vote and queue songs.</p>
+        <a href="room.html" style="font-weight: 600; font-size: 16px; min-height: 44px; display: inline-flex; align-items: center; align-self: flex-start">Skip for now</a>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+  // Streaming-service picker: one choice at a time, arrow keys move between options.
+  (function () {
+    var group = document.querySelector('.services');
+    var radios = Array.prototype.slice.call(group.querySelectorAll('[role="radio"]'));
+    var labels = document.querySelectorAll('[data-service]');
+    function select(btn, focus) {
+      radios.forEach(function (r) {
+        var on = r === btn;
+        r.setAttribute('aria-checked', on ? 'true' : 'false');
+        r.tabIndex = on ? 0 : -1;
+      });
+      labels.forEach(function (el) { el.textContent = btn.textContent; });
+      if (focus) btn.focus();
+    }
+    radios.forEach(function (r, i) {
+      r.addEventListener('click', function () { select(r); });
+      r.addEventListener('keydown', function (e) {
+        var step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+        if (!step) return;
+        e.preventDefault();
+        select(radios[(i + step + radios.length) % radios.length], true);
+      });
+    });
+  })();
+</script>
+</body>
+</html>
