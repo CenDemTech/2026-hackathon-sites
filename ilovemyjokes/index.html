@@ -72,6 +72,7 @@ h1,h2,h3{margin:0;font-weight:400}
 .hero-fig figcaption{margin-top:28px;font-size:14px;color:var(--muted)}
 /* results */
 .results-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;padding-bottom:16px;border-bottom:2px solid var(--ink);margin-top:64px}
+.results-head{scroll-margin-top:24px}
 .results-head h2{font-size:38px}
 .controls-row{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
 select{height:44px;padding:0 14px;font:inherit;font-size:15px;border:1.5px solid var(--ink);border-radius:999px;background:var(--card);color:var(--ink)}
@@ -209,7 +210,7 @@ tr:last-child td{border-bottom:0}
       </figure>
     </div>
 
-    <div class="results-head">
+    <div class="results-head" id="resultsHead">
       <div>
         <h2 class="display" id="resultsTitle">Featured from The Met</h2>
         <p style="margin:4px 0 0;color:var(--muted)">Each file is checked against your target print size.</p>
@@ -488,6 +489,8 @@ async function runSearch(q) {
   $('resultsTitle').textContent = `Results for “${q}”`;
   $('srcStatus').textContent = 'Searching ' + active.map(s => s.label).join(', ') + '…';
   $('grid').innerHTML = ''; $('empty').hidden = true;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $('resultsHead').scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
   const settled = await Promise.allSettled(active.map(s => SEARCHERS[s.id](q)));
   const all = []; const notes = [];
   settled.forEach((res, i) => {
